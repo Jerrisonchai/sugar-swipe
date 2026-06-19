@@ -36,6 +36,8 @@ const Input = {
     if (row < 0 || row >= this.board.rows || col < 0 || col >= this.board.cols) {
       return null;
     }
+    // Skip obstacle-blocked cells
+    if (this.board.hasObstacle(row, col)) return null;
     return { row, col };
   },
 

@@ -154,3 +154,79 @@
   z-index: 1;
   animation: bombPulse 1s ease-in-out infinite;
 }
+
+/* ===== OBSTACLES — Ice, Chocolate (stubs) ===== */
+
+/* Ice block overlay */
+.candy--obstacle {
+  cursor: not-allowed;
+}
+
+.candy--ice-1::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 4px solid rgba(180,220,255,0.85);
+  background: rgba(255,255,255,0.2);
+  box-shadow: inset 0 0 12px rgba(200,230,255,0.6),
+              0 0 8px rgba(180,220,255,0.5);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.candy--ice-2::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 5px solid rgba(130,190,240,0.9);
+  background: rgba(255,255,255,0.35);
+  box-shadow: inset 0 0 18px rgba(160,210,255,0.7),
+              0 0 12px rgba(150,210,255,0.6);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Ice cracking VFX */
+.candy--ice-break::before {
+  animation: iceShatter 0.4s ease-out forwards;
+}
+
+@keyframes iceShatter {
+  0%   { transform: scale(1); opacity: 1; }
+  40%  { transform: scale(1.3); opacity: 0.5; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Jelly underlay — translucent colored rectangle behind candy */
+.candy--jelly {
+  background: none !important;
+  position: relative;
+}
+
+.candy--jelly::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,140,200,0.45), rgba(255,100,180,0.25));
+  box-shadow: inset 0 0 10px rgba(255,130,190,0.3);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Jelly cell when candy is present but jelly UNDER */
+.candy--jelly:not(.candy--empty) {
+  background: none !important;
+}
+
+/* World themes */
+.game-screen {
+  background: linear-gradient(180deg, #1a0a2e 0%, #2d1b69 100%);
+  transition: background 0.5s ease;
+}
+
+.game-screen[data-world="2"] {
+  background: linear-gradient(180deg, #1e2a4a 0%, #3a6b8f 60%, #b8dff0 100%);
+}

@@ -27,6 +27,18 @@ const UI = {
         cell.dataset.row = r;
         cell.dataset.col = c;
 
+        // Obstacle overlay (rendered on top of candy)
+        const obs = board.getObstacle(r, c);
+        if (obs) {
+          cell.classList.add(`candy--obstacle`);
+          cell.classList.add(`candy--ice-${Math.min(obs.layers, 3)}`);
+        }
+
+        // Jelly underlay
+        if (board.hasJelly(r, c)) {
+          cell.classList.add('candy--jelly');
+        }
+
         if (candy) {
           cell.classList.add(`candy-${candy.type}`);
           if (candy.special) {
@@ -161,6 +173,14 @@ const UI = {
     setTimeout(() => flash.remove(), 650);
   },
 
+  /* ---- Ice break VFX ---- */
+  showIceBreak(row, col) {
+    const el = this.getCellEl(row, col);
+    if (!el) return;
+    el.classList.add('candy--ice-break');
+    setTimeout(() => el.classList.remove('candy--ice-break'), 400);
+  },
+
   /* ---- Enhanced particle burst (15 particles, per-candy colors) ---- */
   _burstParticles(row, col, el) {
     const canvas = document.getElementById('particles');
@@ -288,11 +308,24 @@ const UI = {
   },
 
   /* ---- HUD ---- */
-  updateHUD(level, score, moves) {
+  updateHUD(level, score, moves, jellyLeft) {
     document.getElementById('hud-level').textContent = level.id;
     this.tickScore(score);
     document.getElementById('hud-target').textContent = level.target1Star.toLocaleString();
     document.getElementById('hud-moves').textContent = moves;
+
+    // Jelly progress for jelly levels
+    const jellyEl = document.getElementById('hud-jelly');
+    if (level.type === 'jelly' && jellyLeft > 0) {
+      const total = level.jelly.length;
+      jellyEl.textContent = `🍮 ${total - jellyLeft}/${total}`;
+      jellyEl.style.display = 'block';
+    } else if (level.type === 'jelly' && jellyLeft === 0) {
+      jellyEl.textContent = '🍮 CLEAR!';
+      jellyEl.style.display = 'block';
+    } else {
+      jellyEl.style.display = 'none';
+    }
   },
 
   /* ---- Screens with transitions ---- */

@@ -3,7 +3,7 @@
 window._SS = window._SS || {};
 
 (function () {
-  const { Board, MatchEngine, Cascade, Input, UI, Scoring, Levels, Storage, Specials, AudioFX } = window._SS;
+  const { Board, MatchEngine, Cascade, Input, UI, Scoring, Levels, Storage, Specials, AudioFX, Obstacles } = window._SS;
 
   // ===== STATE =====
   const state = {
@@ -11,12 +11,14 @@ window._SS = window._SS || {};
     score: 0,
     movesLeft: 0,
     chainIndex: 0,
-    phase: 'IDLE', // IDLE | SWAPPING | MATCHING | CASCADING | COMPLETE | FAIL | PAUSED
+    jellyLeft: 0,     // remaining jelly cells (0 for score levels)
+    phase: 'IDLE',
   };
 
   // ===== GAME LOOP =====
 
   async function startLevel(levelId) {
+    await Levels.load();
     const level = Levels.getById(levelId);
     state.level = level;
     state.score = 0;
@@ -25,8 +27,20 @@ window._SS = window._SS || {};
     state.phase = 'IDLE';
 
     Board.init(level.rows, level.cols);
+
+    // Place obstacles and jelly from level data
+    if (level.obstacles && level.obstacles.length > 0) {
+      Obstacles.placeAll(Board, level.obstacles);
+    }
+    if (level.jelly && level.jelly.length > 0) {
+      Board.setJellyCells(level.jelly);
+      state.jellyLeft = level.jelly.length;
+    } else {
+      state.jellyLeft = 0;
+    }
+
     UI.renderBoard(Board);
-    UI.updateHUD(level, state.score, state.movesLeft);
+    UI.updateHUD(level, state.score, state.movesLeft, state.jellyLeft);
     UI.showGameScreen();
     Input.enable();
 
@@ -109,7 +123,7 @@ window._SS = window._SS || {};
     await processMatchLoop();
 
     state.movesLeft--;
-    UI.updateHUD(state.level, state.score, state.movesLeft);
+    UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
     await checkEndCondition();
   }
 
@@ -134,7 +148,7 @@ window._SS = window._SS || {};
     // Score the mass clear
     const points = uniq.length * 35;
     state.score += points;
-    UI.updateHUD(state.level, state.score, state.movesLeft);
+    UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
     UI.showCombo('Color Bomb!');
 
     // Animate and remove
@@ -153,7 +167,7 @@ window._SS = window._SS || {};
     await processMatchLoop();
 
     state.movesLeft--;
-    UI.updateHUD(state.level, state.score, state.movesLeft);
+    UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
     await checkEndCondition();
   }
 
@@ -203,7 +217,7 @@ window._SS = window._SS || {};
       const bonusPoints = (expandedCells.length - result.cells.length) * 20;
       const points = basePoints + bonusPoints;
       state.score += points;
-      UI.updateHUD(state.level, state.score, state.movesLeft);
+      UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
 
       // Show combo
       const comboText = Scoring.comboName(state.chainIndex);
@@ -215,6 +229,15 @@ window._SS = window._SS || {};
 
       // 6. Remove all cells from model
       Board.removeCells(expandedCells);
+
+      // 6b. Damage adjacent obstacles + clear jelly on matched cells
+      const destroyed = Obstacles.damageFromMatches(Board, expandedCells);
+      for (const d of destroyed) UI.showIceBreak(d.row, d.col);
+      if (state.jellyLeft > 0) {
+        const cleared = Obstacles.clearJellyFromMatches(Board, expandedCells);
+        state.jellyLeft -= cleared;
+      }
+      UI.renderBoard(Board); // Re-render to show obstacle/jelly changes
 
       // 7. Place newly created specials on the board
       for (const sp of newSpecials) {
@@ -273,7 +296,17 @@ window._SS = window._SS || {};
   // ===== END CONDITIONS =====
 
   async function checkEndCondition() {
-    if (state.score >= state.level.target1Star) {
+    const isJellyLevel = state.level.type === 'jelly';
+    const jellyCleared = isJellyLevel && state.jellyLeft === 0;
+    const scoreMet = state.score >= state.level.target1Star;
+    const movesExhausted = state.movesLeft <= 0;
+
+    // Win: score met (for score levels) OR score+jelly met (for jelly levels)
+    const won = isJellyLevel ? (jellyCleared && scoreMet) : scoreMet;
+    // Fail: moves exhausted without meeting win conditions
+    const failed = movesExhausted && !won;
+
+    if (won) {
       const stars = Scoring.calcStars(
         state.score,
         state.movesLeft,
@@ -289,7 +322,7 @@ window._SS = window._SS || {};
 
       await UI._sleep(400);
       UI.showLevelComplete(stars, state.score);
-    } else if (state.movesLeft <= 0) {
+    } else if (failed) {
       state.phase = 'FAIL';
       AudioFX.levelFail();
       await UI._sleep(400);
