@@ -336,3 +336,193 @@ html, body {
     z-index: 200;
   }
 }
+
+/* ===== WORLD MAP ===== */
+.map-header {
+  text-align: center;
+  padding: 20px 16px 8px;
+  padding-top: calc(env(safe-area-inset-top, 16px) + 20px);
+}
+
+.map-title {
+  font-family: var(--font-heading);
+  font-size: clamp(24px, 6vw, 32px);
+  background: var(--gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.map-sub {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.world-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 16px;
+  padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 20px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-content: start;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.world-card {
+  position: relative;
+  border-radius: 20px;
+  padding: 20px 14px;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 2px solid rgba(255,255,255,0.12);
+  overflow: hidden;
+}
+
+.world-card:active {
+  transform: scale(0.96);
+}
+
+.world-card--locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.6);
+}
+
+.world-card--locked:active {
+  transform: none;
+}
+
+.world-card-name {
+  font-family: var(--font-heading);
+  font-size: clamp(14px, 3.5vw, 18px);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.world-card-stars {
+  font-size: 12px;
+  color: var(--gold-solid);
+  margin-top: 2px;
+}
+
+.world-card-lock {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 40px;
+  opacity: 0.7;
+}
+
+/* ===== LEVEL GRID ===== */
+.grid-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  padding-top: calc(env(safe-area-inset-top, 16px) + 12px);
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.btn--icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: var(--text-primary);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.btn--icon:active {
+  background: rgba(255,255,255,0.15);
+}
+
+.grid-title {
+  font-family: var(--font-heading);
+  font-size: clamp(18px, 4.5vw, 24px);
+  flex: 1;
+}
+
+.grid-stars-summary {
+  font-size: 13px;
+  color: var(--gold-solid);
+  font-family: var(--font-heading);
+  white-space: nowrap;
+}
+
+.level-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 16px 20px;
+  padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 20px);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  align-content: start;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.level-btn {
+  aspect-ratio: 1;
+  border-radius: 16px;
+  border: 2px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  position: relative;
+  gap: 2px;
+}
+
+.level-btn:active:not(.level-btn--locked) {
+  transform: scale(0.92);
+  background: rgba(255,255,255,0.14);
+}
+
+.level-btn--locked {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.level-btn--locked:active {
+  transform: none;
+}
+
+.level-btn-num {
+  font-family: var(--font-heading);
+  font-size: clamp(14px, 3.5vw, 20px);
+  line-height: 1;
+}
+
+.level-btn-stars {
+  font-size: clamp(8px, 2vw, 11px);
+  color: rgba(255,255,255,0.2);
+  letter-spacing: -1px;
+}
+
+.level-btn-stars.has-stars {
+  color: var(--gold-solid);
+}

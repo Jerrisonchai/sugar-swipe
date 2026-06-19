@@ -384,6 +384,85 @@ const UI = {
   _sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   },
+
+  /* ===== WORLD MAP ===== */
+
+  WORLD_DATA: [
+    { id: 1, name: 'Candy Meadow', bg: 'linear-gradient(135deg, #a8e6cf 0%, #7bed9f 100%)', levels: [1,2,3,4,5,6,7,8,9,10] },
+    { id: 2, name: 'Frosted Peaks', bg: 'linear-gradient(135deg, #b8dff0 0%, #5b9bd5 100%)', levels: [11,12,13,14,15,16,17,18,19,20] },
+    { id: 3, name: 'Chocolate Swamp', bg: 'linear-gradient(135deg, #6b4226 0%, #a0522d 100%)', levels: [], locked: true },
+    { id: 4, name: 'Licorice Lab', bg: 'linear-gradient(135deg, #2d1b69 0%, #6b3fa0 100%)', levels: [], locked: true },
+    { id: 5, name: 'Marmalade Manor', bg: 'linear-gradient(135deg, #ff6348 0%, #ffa502 100%)', levels: [], locked: true },
+    { id: 6, name: 'Rainbow Summit', bg: 'linear-gradient(135deg, #667eea 0%, #a55eea 100%)', levels: [], locked: true },
+  ],
+
+  showWorldMap() {
+    this.showScreen('world-map');
+    var container = document.getElementById('world-list');
+    if (!container) return;
+    var Storage = window._SS.Storage;
+    var worlds = this.WORLD_DATA;
+    var html = '';
+    for (var i = 0; i < worlds.length; i++) {
+      var w = worlds[i];
+      var unlocked = !w.locked && (w.id === 1 || Storage.getUnlockedWorld() >= w.id);
+      var starsEarned = 0;
+      var totalLevels = w.levels.length;
+      for (var j = 0; j < w.levels.length; j++) {
+        starsEarned += Storage.getLevelStars(w.levels[j]);
+      }
+      var maxStars = totalLevels * 3;
+      if (w.locked || !unlocked) {
+        html += '<div class="world-card world-card--locked" style="background:' + w.bg + '"><div class="world-card-name">' + w.name + '</div><div class="world-card-stars">Coming Soon</div><div class="world-card-lock">🔒</div></div>';
+      } else {
+        html += '<div class="world-card" style="background:' + w.bg + '" data-world="' + w.id + '"><div class="world-card-name">' + w.name + '</div><div class="world-card-stars">⭐ ' + starsEarned + '/' + maxStars + '</div></div>';
+      }
+    }
+    container.innerHTML = html;
+    var self = this;
+    container.querySelectorAll('.world-card:not(.world-card--locked)').forEach(function(card) {
+      card.addEventListener('click', function() {
+        self.showLevelGrid(parseInt(card.dataset.world));
+      });
+    });
+  },
+
+  showLevelGrid(worldId) {
+    this.showScreen('level-grid');
+    var Storage = window._SS.Storage;
+    var world = this.WORLD_DATA.find(function(w) { return w.id === worldId; });
+    if (!world) return;
+    document.getElementById('grid-world-name').textContent = world.name;
+    var starsEarned = 0;
+    for (var i = 0; i < world.levels.length; i++) {
+      starsEarned += Storage.getLevelStars(world.levels[i]);
+    }
+    var maxStars = world.levels.length * 3;
+    document.getElementById('grid-stars-summary').textContent = '⭐ ' + starsEarned + '/' + maxStars;
+    var container = document.getElementById('level-list');
+    var html = '';
+    for (var i = 0; i < world.levels.length; i++) {
+      var lid = world.levels[i];
+      var stars = Storage.getLevelStars(lid);
+      var prevCompleted = i === 0 || Storage.getLevelStars(world.levels[i - 1]) > 0;
+      var locked = !prevCompleted && i > 0;
+      if (locked) {
+        html += '<div class="level-btn level-btn--locked"><div class="level-btn-num">' + lid + '</div><div class="level-btn-stars">🔒</div></div>';
+      } else {
+        var starStr = stars > 0 ? '★'.repeat(stars) : '☆☆☆';
+        html += '<div class="level-btn" data-level="' + lid + '"><div class="level-btn-num">' + lid + '</div><div class="level-btn-stars' + (stars > 0 ? ' has-stars' : '') + '">' + starStr + '</div></div>';
+      }
+    }
+    container.innerHTML = html;
+    var self = this;
+    container.querySelectorAll('.level-btn:not(.level-btn--locked)').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var levelId = parseInt(btn.dataset.level);
+        if (window._SS._startLevel) window._SS._startLevel(levelId);
+      });
+    });
+    document.getElementById('btn-back-worlds').onclick = function() { self.showWorldMap(); };
+  },
 };
 
 window._SS.UI = UI;

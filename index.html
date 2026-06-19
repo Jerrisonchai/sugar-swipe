@@ -10,13 +10,32 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/main.css?v=6">
-<link rel="stylesheet" href="css/animations.css?v=6">
-<link rel="stylesheet" href="css/candy-designs.css?v=6">
+<link rel="stylesheet" href="css/main.css?v=7">
+<link rel="stylesheet" href="css/animations.css?v=7">
+<link rel="stylesheet" href="css/candy-designs.css?v=7">
 </head>
 <body>
 
 <div id="app">
+
+  <!-- ===== WORLD MAP SCREEN ===== -->
+  <div id="world-map" class="screen active">
+    <div class="map-header">
+      <h1 class="map-title">🍬 Sugar Swipe</h1>
+      <p class="map-sub">Tap a world to play</p>
+    </div>
+    <div id="world-list" class="world-list"></div>
+  </div>
+
+  <!-- ===== LEVEL GRID SCREEN ===== -->
+  <div id="level-grid" class="screen">
+    <div class="grid-header">
+      <button id="btn-back-worlds" class="btn btn--icon">←</button>
+      <h2 id="grid-world-name" class="grid-title">Candy Meadow</h2>
+      <div class="grid-stars-summary" id="grid-stars-summary"></div>
+    </div>
+    <div id="level-list" class="level-list"></div>
+  </div>
 
   <!-- ===== GAME SCREEN ===== -->
   <div id="game-screen" class="screen active">
@@ -122,12 +141,12 @@
 <script src="js/levels.js?v=3"></script>
 <script src="js/board.js?v=3"></script>
 <script src="js/match-engine.js?v=3"></script>
-<script src="js/special.js?v=6"></script>
-<script src="js/obstacles.js?v=6"></script>
-<script src="js/audio.js?v=6"></script>
-<script src="js/cascade.js?v=6"></script>
-<script src="js/input.js?v=6"></script>
-<script src="js/ui.js?v=6"></script>
-<script src="js/main.js?v=6"></script>
+<script src="js/special.js?v=7"></script>
+<script src="js/obstacles.js?v=7"></script>
+<script src="js/audio.js?v=7"></script>
+<script src="js/cascade.js?v=7"></script>
+<script src="js/input.js?v=7"></script>
+<script src="js/ui.js?v=7"></script>
+<script src="js/main.js?v=7"></script>
 </body>
 </html>

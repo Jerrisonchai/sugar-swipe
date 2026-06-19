@@ -320,8 +320,26 @@ window._SS = window._SS || {};
       Storage.setLevelStars(state.level.id, stars);
       Storage.setHighScore(state.level.id, state.score);
 
+      // Unlock next world if all levels in current world completed
+      const worldLevels = Levels.getAll().filter(l => l.world === state.level.world);
+      const allComplete = worldLevels.every(l => Storage.getLevelStars(l.id) > 0);
+      if (allComplete && state.level.world < 6) {
+        Storage.setUnlockedWorld(state.level.world + 1);
+      }
+
       await UI._sleep(400);
       UI.showLevelComplete(stars, state.score);
+
+      // Update Next Level button to go to level grid
+      document.getElementById('btn-next-level').onclick = () => {
+        AudioFX.buttonTap();
+        const next = Levels.getNextLevel(state.level.id);
+        if (next) {
+          startLevel(next.id);
+        } else {
+          gotoWorldMap();
+        }
+      };
     } else if (failed) {
       state.phase = 'FAIL';
       AudioFX.levelFail();
@@ -349,7 +367,7 @@ window._SS = window._SS || {};
 
     document.getElementById('btn-map-win').addEventListener('click', () => {
       AudioFX.buttonTap();
-      startLevel(1);
+      gotoWorldMap();
     });
 
     document.getElementById('btn-retry').addEventListener('click', () => {
@@ -359,7 +377,7 @@ window._SS = window._SS || {};
 
     document.getElementById('btn-map-fail').addEventListener('click', () => {
       AudioFX.buttonTap();
-      startLevel(1);
+      gotoWorldMap();
     });
 
     document.getElementById('btn-pause').addEventListener('click', () => {
@@ -386,16 +404,25 @@ window._SS = window._SS || {};
     document.getElementById('btn-quit').addEventListener('click', () => {
       AudioFX.buttonTap();
       UI.hidePause();
-      startLevel(1);
+      gotoWorldMap();
     });
   }
 
+  function gotoWorldMap() {
+    document.querySelectorAll('.screen.overlay').forEach(s => s.classList.remove('active'));
+    UI.showLevelGrid(state.level.world);
+  }
+
   // ===== INIT =====
-  function init() {
+  async function init() {
     setupInput();
     setupButtons();
-    startLevel(1);
+    await Levels.load();
+    UI.showWorldMap();
   }
+
+  // Export for UI level-grid callbacks
+  window._SS._startLevel = startLevel;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
