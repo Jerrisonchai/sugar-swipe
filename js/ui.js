@@ -1206,7 +1206,7 @@ const UI = {
     }
     list.innerHTML = html;
     // Re-bind claim buttons (needed when _renderChallenges is called standalone, not just from showEvents)
-    self._bindClaimButtons();
+    this._bindClaimButtons();
     } catch(e) { list.innerHTML = '<p class="spin-status">No challenges available</p>'; console.warn('_renderChallenges error:', e); }
   },
 
