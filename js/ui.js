@@ -1016,6 +1016,252 @@ const UI = {
     return Math.floor(hours / 24) + 'd ago';
   },
 
+
+  /* ===== PHASE 9: EVENTS ===== */
+  showEvents() {
+    this.showScreen('events-screen');
+    var self = this;
+    self._renderSpinWheel();
+    self._renderChallenges();
+    self._renderStreaks();
+    self._updateSpinStatus();
+
+    // Tab switching
+    document.querySelectorAll('#events-screen .events-tab').forEach(function(t) {
+      t.onclick = function() { self._switchEventTab(this.dataset.tab); };
+    });
+
+    // Close button
+    var closeBtn = document.getElementById('btn-close-events');
+    if (closeBtn) closeBtn.onclick = function() { self.hideScreen('events-screen'); };
+
+    // Spin button
+    document.getElementById('btn-spin').onclick = function() {
+      var AudioFX = window._SS.AudioFX;
+      if (AudioFX) AudioFX.buttonTap();
+      var EM = window._SS.EventManager;
+      if (!EM.canSpinToday()) return;
+      self._doSpin();
+    };
+
+    // Streak claim button
+    document.getElementById('btn-claim-streak').onclick = function() {
+      var AudioFX = window._SS.AudioFX;
+      if (AudioFX) AudioFX.buttonTap();
+      var EM = window._SS.EventManager;
+      var result = EM.claimStreak();
+      if (result) {
+        if (AudioFX) AudioFX.streakClaim();
+        self._renderStreaks();
+        self._updateEventBadge();
+      }
+    };
+
+    // Challenge claim buttons
+    document.querySelectorAll('.btn--claim').forEach(function(btn) {
+      btn.onclick = function() {
+        var idx = parseInt(this.dataset.idx);
+        var AudioFX = window._SS.AudioFX;
+        if (AudioFX) AudioFX.challengeComplete();
+        var result = window._SS.EventManager.claimChallenge(idx);
+        if (result) {
+          self._renderChallenges();
+          self._updateEventBadge();
+        }
+      };
+    });
+  },
+
+  _switchEventTab(tab) {
+    document.querySelectorAll('#events-screen .events-tab').forEach(function(t) {
+      t.classList.toggle('active', t.dataset.tab === tab);
+    });
+    document.getElementById('event-spin').classList.toggle('active', tab === 'spin');
+    document.getElementById('event-challenges').classList.toggle('active', tab === 'challenges');
+    document.getElementById('event-streak').classList.toggle('active', tab === 'streak');
+    if (tab === 'spin') this._updateSpinStatus();
+    if (tab === 'challenges') this._renderChallenges();
+    if (tab === 'streak') this._renderStreaks();
+  },
+
+  _renderSpinWheel() {
+    var wheel = document.getElementById('spin-wheel');
+    if (!wheel) return;
+    var EM = window._SS.EventManager;
+    var rewards = EM.SPIN_REWARDS;
+    var segAngle = 360 / rewards.length;
+    var html = '';
+    for (var i = 0; i < rewards.length; i++) {
+      var r = rewards[i];
+      var angle = i * segAngle + segAngle / 2;
+      var rad = angle * Math.PI / 180;
+      var x = 50 + 35 * Math.cos(rad);
+      var y = 50 + 35 * Math.sin(rad);
+      html += '<div class="spin-segment" style="transform:rotate(' + (i * segAngle) + 'deg);">';
+      html += '<span class="spin-segment-label">' + r.icon + '</span>';
+      html += '</div>';
+    }
+    wheel.innerHTML = html;
+    wheel.style.transform = 'rotate(0deg)';
+  },
+
+  _doSpin() {
+    var EM = window._SS.EventManager;
+    var AudioFX = window._SS.AudioFX;
+    if (!EM.canSpinToday()) return;
+
+    var btn = document.getElementById('btn-spin');
+    if (btn) btn.disabled = true;
+
+    var targetIdx = EM.getSpinTarget();
+    var segAngle = 360 / EM.SPIN_REWARDS.length;
+    // Land on the center of the chosen segment. Wheel rotates clockwise,
+    // so the winning segment needs to be at 0° (top pointer).
+    // Pointer is at top (0°). Segment i is at i*segAngle from the top.
+    // To land segment i at pointer, rotate: (360 - i*segAngle - segAngle/2) + random within segment
+    var targetAngle = 360 - targetIdx * segAngle - segAngle / 2;
+    targetAngle += (Math.random() * 0.8 - 0.4) * segAngle; // slight randomness within segment
+    var totalSpin = 360 * 5 + targetAngle; // 5 full rotations + target
+
+    var wheel = document.getElementById('spin-wheel');
+    wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+    wheel.style.transform = 'rotate(' + totalSpin + 'deg)';
+
+    // Spin tick sounds
+    var tickCount = 0;
+    var tickInterval = setInterval(function() {
+      if (tickCount < 25 && AudioFX) AudioFX.spinTick();
+      tickCount++;
+      if (tickCount > 25) clearInterval(tickInterval);
+    }, 150);
+
+    var self = this;
+    var reward = EM.SPIN_REWARDS[targetIdx];
+    setTimeout(function() {
+      clearInterval(tickInterval);
+      EM.doSpin(); // actually grant the reward
+      if (AudioFX) AudioFX.spinWin();
+      // Bounce pointer
+      document.querySelector('.spin-pointer').classList.add('bouncing');
+      setTimeout(function() { document.querySelector('.spin-pointer').classList.remove('bouncing'); }, 300);
+      self._showSpinReward(reward);
+      self._updateSpinStatus();
+      self._updateEventBadge();
+    }, 4200);
+  },
+
+  _showSpinReward(reward) {
+    // Remove existing modal if any
+    var old = document.getElementById('spin-reward-modal');
+    if (old) old.remove();
+
+    var modal = document.createElement('div');
+    modal.id = 'spin-reward-modal';
+    modal.innerHTML = '<div class="spin-reward-card">' +
+      '<div class="spin-reward-icon">' + reward.icon + '</div>' +
+      '<div class="spin-reward-label">' + reward.label + '</div>' +
+      '<button class="spin-reward-btn">🎉 Awesome!</button>' +
+      '</div>';
+    document.body.appendChild(modal);
+
+    var self = this;
+    modal.querySelector('.spin-reward-btn').onclick = function() {
+      modal.remove();
+      var btn = document.getElementById('btn-spin');
+      if (btn) btn.disabled = true;
+    };
+    modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+  },
+
+  _updateSpinStatus() {
+    var el = document.getElementById('spin-status');
+    var btn = document.getElementById('btn-spin');
+    var can = window._SS.EventManager.canSpinToday();
+    if (el) el.textContent = can ? '🎡 Your daily spin is ready!' : '✅ Come back tomorrow for another spin!';
+    if (btn) btn.disabled = !can;
+  },
+
+  _renderChallenges() {
+    var list = document.getElementById('challenge-list');
+    if (!list) return;
+    var EM = window._SS.EventManager;
+    var ch = EM.getChallenges();
+    var html = '';
+    for (var i = 0; i < ch.items.length; i++) {
+      var item = ch.items[i];
+      var prog = Math.min(item.target, ch.progress[i] || 0);
+      var pct = Math.round((prog / item.target) * 100);
+      var complete = prog >= item.target;
+      var claimed = ch.claimed[i];
+
+      // Build reward text
+      var rew = '';
+      if (item.reward.coins) rew += item.reward.coins + ' 🪙 ';
+      if (item.reward.booster_hammer) rew += item.reward.booster_hammer + 'x 🍭 ';
+      if (item.reward.booster_moves) rew += item.reward.booster_moves + 'x +3 ';
+      if (item.reward.booster_bomb) rew += item.reward.booster_bomb + 'x 💣 ';
+
+      var cls = claimed ? ' challenge-card--claimed' : complete ? ' challenge-card--complete' : '';
+      html += '<div class="challenge-card' + cls + '">';
+      html += '<div class="challenge-desc">' + item.desc + '</div>';
+      html += '<div class="challenge-bar-wrap"><div class="challenge-bar-fill" style="width:' + pct + '%"></div></div>';
+      html += '<div class="challenge-bar-text">' + prog + '/' + item.target + ' (' + pct + '%)</div>';
+      html += '<div class="challenge-reward">🎁 ' + rew.trim() + '</div>';
+      if (claimed) {
+        html += '<button class="btn--claimed" disabled>✅ Claimed</button>';
+      } else if (complete) {
+        html += '<button class="btn--claim" data-idx="' + i + '">🏆 Claim!</button>';
+      }
+      html += '</div>';
+    }
+    list.innerHTML = html;
+  },
+
+  _renderStreaks() {
+    var cal = document.getElementById('streak-calendar');
+    if (!cal) return;
+    var EM = window._SS.EventManager;
+    var s = EM.getStreak();
+    var canClaim = EM.canClaimStreak();
+    var html = '';
+    for (var i = 0; i < 7; i++) {
+      var sr = EM.STREAK_REWARDS[i];
+      var dayNum = i + 1;
+      var isClaimed = s.claimed[dayNum];
+      var isToday = dayNum === s.current && !s.claimed[dayNum];
+      var isPast = dayNum < s.current && !isClaimed;
+      var cls = isClaimed ? ' streak-day--claimed' : isToday ? ' streak-day--today' : isPast ? ' streak-day--missed' : '';
+      html += '<div class="streak-day' + cls + '">';
+      html += '<span class="streak-day-icon">' + (isClaimed ? '✅' : sr.icon) + '</span>';
+      html += '<span class="streak-day-num">Day ' + dayNum + '</span>';
+      html += '</div>';
+    }
+    cal.innerHTML = html;
+
+    var btn = document.getElementById('btn-claim-streak');
+    var info = document.querySelector('.streak-info');
+    var targetDay = EM.STREAK_REWARDS[s.current - 1];
+    if (canClaim && btn) {
+      btn.style.display = 'block';
+      btn.textContent = '🔥 Claim Day ' + s.current + ' — ' + targetDay.label;
+    } else if (btn) {
+      btn.style.display = 'none';
+    }
+  },
+
+  _updateEventBadge() {
+    var badge = document.getElementById('events-btn-badge');
+    if (!badge) return;
+    var EM = window._SS.EventManager;
+    var count = EM.getNotificationCount();
+    if (count > 0) {
+      badge.textContent = count;
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+  },
+
 };
 
 window._SS.UI = UI;

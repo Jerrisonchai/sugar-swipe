@@ -267,6 +267,84 @@ const AudioFX = {
     });
   },
 
+  /** Spin wheel tick — rapid clicks during rotation */
+  spinTick() {
+    this._play(function(t) {
+      var dur = 0.04;
+      var buf = AudioFX.ctx.createBuffer(1, AudioFX.ctx.sampleRate * dur, AudioFX.ctx.sampleRate);
+      var data = buf.getChannelData(0);
+      for (var i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.2;
+      var src = AudioFX.ctx.createBufferSource();
+      var filter = AudioFX.ctx.createBiquadFilter();
+      var gain = AudioFX.ctx.createGain();
+      src.buffer = buf;
+      filter.type = 'highpass'; filter.frequency.value = 3000;
+      gain.gain.setValueAtTime(AudioFX._volume * 0.1, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      src.connect(filter).connect(gain).connect(AudioFX.ctx.destination);
+      src.start(t); src.stop(t + dur);
+    });
+  },
+
+  /** Spin wheel jackpot — exciting ascending jingle */
+  spinWin() {
+    var notes = [523, 659, 784, 1047, 1319];
+    var self = this;
+    notes.forEach(function(freq, i) {
+      self._play(function(t) {
+        var start = t + i * 0.08;
+        var osc = self.ctx.createOscillator();
+        var gain = self.ctx.createGain();
+        osc.type = i === notes.length - 1 ? 'triangle' : 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(self._volume * 0.2, start + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
+        osc.connect(gain).connect(self.ctx.destination);
+        osc.start(start); osc.stop(start + 0.4);
+      });
+    });
+  },
+
+  /** Challenge complete notification */
+  challengeComplete() {
+    var notes = [659, 784, 1047];
+    var self = this;
+    notes.forEach(function(freq, i) {
+      self._play(function(t) {
+        var start = t + i * 0.1;
+        var osc = self.ctx.createOscillator();
+        var gain = self.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(self._volume * 0.18, start + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
+        osc.connect(gain).connect(self.ctx.destination);
+        osc.start(start); osc.stop(start + 0.3);
+      });
+    });
+  },
+
+  /** Streak claim — ascending happy melody */
+  streakClaim() {
+    this._play(function(t) {
+      var notes = [392, 523, 659, 784, 1047];
+      notes.forEach(function(freq, i) {
+        var start = t + i * 0.06;
+        var osc = AudioFX.ctx.createOscillator();
+        var gain = AudioFX.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(AudioFX._volume * 0.15, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.2);
+        osc.connect(gain).connect(AudioFX.ctx.destination);
+        osc.start(start); osc.stop(start + 0.2);
+      });
+    });
+  },
+
   /* ---- Internals ---- */
   _play(fn) {
     if (!this.enabled || !this.ctx) return;

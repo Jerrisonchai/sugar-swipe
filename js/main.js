@@ -124,6 +124,7 @@ window._SS = window._SS || {};
     AudioFX.specialActivate();
     UI.showWrappedExplode(r, c); // reuse wrapped VFX for hammer
     state.phase = 'MATCHING';
+    window._SS.EventManager.trackProgress('boostersUsed', 1);
     await UI.animateMatches(cells);
     Board.removeCells(cells);
 
@@ -240,6 +241,8 @@ window._SS = window._SS || {};
     UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
     UI.showCombo('Color Bomb!');
     state.phase = 'MATCHING';
+    window._SS.EventManager.trackProgress('boostersUsed', 1);
+    window._SS.EventManager.trackProgress('boostersUsed', 1);
     await UI.animateMatches(uniq);
     Board.removeCells(uniq);
     state.phase = 'CASCADING';
@@ -295,6 +298,7 @@ window._SS = window._SS || {};
       if (comboText) UI.showCombo(comboText);
 
       state.phase = 'MATCHING';
+    window._SS.EventManager.trackProgress('boostersUsed', 1);
       await UI.animateMatches(expandedCells);
       Board.removeCells(expandedCells);
 
@@ -467,6 +471,7 @@ window._SS = window._SS || {};
 
       await UI._sleep(400);
       UI.showLevelComplete(stars, state.score);
+      trackEventProgress({ stars: stars, score: state.score, world: state.level ? state.level.world : 1 });
       state.levelStarted = false;
 
       document.getElementById('btn-next-level').onclick = () => {
@@ -657,6 +662,7 @@ window._SS = window._SS || {};
     }
 
     setupAdminToggle();
+    bindEventsNav();
   }
 
   function setupAdminToggle() {
@@ -702,9 +708,38 @@ window._SS = window._SS || {};
       UI.showWorldMap();
     }
     updateFriendBadge();
+    if (UI._updateEventBadge) UI._updateEventBadge();
   }
 
   /** Refresh gift notification badge on world map */
+  function bindEventsNav() {
+    var btn = document.getElementById('btn-open-events');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+      AudioFX.init();
+      UI.showEvents();
+      UI._updateEventBadge();
+    });
+  }
+
+  /** Track event progress after level completion */
+  function trackEventProgress(levelResult) {
+    if (!levelResult) return;
+    var EM = window._SS.EventManager;
+    // Track: levelsCompleted (always +1)
+    EM.trackProgress('levelsCompleted', 1);
+    // Track: starsEarned
+    EM.trackProgress('starsEarned', levelResult.stars || 0);
+    // Track: totalScore
+    EM.trackProgress('totalScore', levelResult.score || 0);
+    // Track: candiesMatched
+    EM.trackProgress('candiesMatched', levelResult.candiesMatched || 0);
+    // Track: worlds 2+
+    if (levelResult.world >= 2) EM.trackProgress('world2plusLevels', 1);
+    // Refresh event badge
+    if (UI._updateEventBadge) UI._updateEventBadge();
+  }
+
   function updateFriendBadge() {
     var badge = document.getElementById('social-btn-badge');
     if (!badge) return;

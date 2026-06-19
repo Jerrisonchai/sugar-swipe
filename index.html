@@ -10,9 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/main.css?v=17">
-<link rel="stylesheet" href="css/animations.css?v=17">
-<link rel="stylesheet" href="css/candy-designs.css?v=17">
+<link rel="stylesheet" href="css/main.css?v=18">
+<link rel="stylesheet" href="css/animations.css?v=18">
+<link rel="stylesheet" href="css/candy-designs.css?v=18">
 </head>
 <body>
 
@@ -28,6 +28,11 @@
       <button id="btn-open-social" class="btn--social-entry">
         👥 Friends
         <span id="social-btn-badge" class="nav-badge" style="display:none;"></span>
+      </button>
+      &nbsp;
+      <button id="btn-open-events" class="btn--events-entry">
+        🎪 Events
+        <span id="events-btn-badge" class="nav-badge" style="display:none;"></span>
       </button>
     </div>
     <div id="world-list" class="world-list"></div>
@@ -270,21 +275,56 @@
     </div>
   </div>
 
+
+  <!-- ===== EVENTS SCREEN ===== -->
+  <div id="events-screen" class="screen overlay">
+    <div class="events-panel glass-panel">
+      <h2 class="events-title">🎪 Events</h2>
+      <div class="events-tabs">
+        <button class="events-tab active" data-tab="spin">🎡 Spin</button>
+        <button class="events-tab" data-tab="challenges">🏆 Challenges</button>
+        <button class="events-tab" data-tab="streak">🔥 Streak</button>
+      </div>
+      <!-- Spin Wheel -->
+      <div id="event-spin" class="event-section active">
+        <div class="spin-container">
+          <div class="spin-pointer">▼</div>
+          <div class="spin-wheel" id="spin-wheel">
+            <!-- 8 segments rendered by JS -->
+          </div>
+        </div>
+        <button id="btn-spin" class="btn btn--primary btn--spin">🎡 SPIN NOW!</button>
+        <p id="spin-status" class="spin-status"></p>
+      </div>
+      <!-- Weekly Challenges -->
+      <div id="event-challenges" class="event-section">
+        <div id="challenge-list" class="challenge-list"></div>
+      </div>
+      <!-- Streak -->
+      <div id="event-streak" class="event-section">
+        <div id="streak-calendar" class="streak-calendar"></div>
+        <button id="btn-claim-streak" class="btn btn--primary" style="display:none;">🔥 Claim Streak Bonus!</button>
+      </div>
+      <button id="btn-close-events" class="btn--close-events">✕</button>
+    </div>
+  </div>
+
 </div>
 
-<script src="js/storage.js?v=17"></script>
-<script src="js/scoring.js?v=17"></script>
-<script src="js/levels.js?v=17"></script>
-<script src="js/board.js?v=17"></script>
-<script src="js/match-engine.js?v=17"></script>
-<script src="js/special.js?v=17"></script>
-<script src="js/obstacles.js?v=17"></script>
-<script src="js/audio.js?v=17"></script>
-<script src="js/cascade.js?v=17"></script>
-<script src="js/input.js?v=17"></script>
-<script src="js/ui.js?v=17"></script>
-<script src="js/shop.js?v=17"></script>
-<script src="js/social.js?v=17"></script>
-<script src="js/main.js?v=17"></script>
+<script src="js/storage.js?v=18"></script>
+<script src="js/scoring.js?v=18"></script>
+<script src="js/levels.js?v=18"></script>
+<script src="js/board.js?v=18"></script>
+<script src="js/match-engine.js?v=18"></script>
+<script src="js/special.js?v=18"></script>
+<script src="js/obstacles.js?v=18"></script>
+<script src="js/audio.js?v=18"></script>
+<script src="js/cascade.js?v=18"></script>
+<script src="js/input.js?v=18"></script>
+<script src="js/ui.js?v=18"></script>
+<script src="js/shop.js?v=18"></script>
+<script src="js/social.js?v=18"></script>
+<script src="js/events.js?v=18"></script>
+<script src="js/main.js?v=18"></script>
 </body>
 </html>
