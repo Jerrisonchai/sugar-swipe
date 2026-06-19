@@ -118,6 +118,7 @@ window._SS = window._SS || {};
     if (!state.hammerMode) return;
     state.hammerMode = false;
     deactivateAllBoosters();
+    Storage.useBooster('hammer'); // deduct hammer count
 
     // Destroy cell contents: candy, obstacle, everything
     const cells = [{ r, c }];
@@ -244,8 +245,7 @@ window._SS = window._SS || {};
     UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
     UI.showCombo('Color Bomb!');
     state.phase = 'MATCHING';
-    window._SS.EventManager.trackProgress('boostersUsed', 1);
-    window._SS.EventManager.trackProgress('boostersUsed', 1);
+    window._SS.EventManager.trackBoosterUsed();
     await UI.animateMatches(uniq);
     Board.removeCells(uniq);
     state.phase = 'CASCADING';

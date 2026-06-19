@@ -192,9 +192,11 @@ const EventManager = {
 
   /** Claim a completed challenge */
   claimChallenge(index) {
+    // Sync progress from weeklyTotals first
+    this.getChallenges();
     var d = this._getData();
     var ch = d.challenges;
-    if (!ch.items || !ch.items[index]) return null;
+    if (!ch || !ch.items || !ch.items[index]) return null;
     if (ch.claimed[index]) return null;
     if ((ch.progress[index] || 0) < ch.items[index].target) return null;
 
