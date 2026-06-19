@@ -75,32 +75,37 @@
 
 /* ===== SPECIAL CANDY DESIGNS ===== */
 
-/* Striped — horizontal white bands overlay */
-.candy--striped-h {
-  background-image: linear-gradient(
-      135deg, transparent 0%, transparent 100%
-    ),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 14%,
-      rgba(255,255,255,0.45) 14%,
-      rgba(255,255,255,0.45) 28%
-    );
+/* Striped — white band overlay via ::before preserves base color */
+.candy--striped-h::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 14%,
+    rgba(255,255,255,0.45) 14%,
+    rgba(255,255,255,0.45) 28%
+  );
+  pointer-events: none;
+  z-index: 2;
 }
 
-/* Striped — vertical white bands overlay */
-.candy--striped-v {
-  background-image: linear-gradient(
-      135deg, transparent 0%, transparent 100%
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 14%,
-      rgba(255,255,255,0.45) 14%,
-      rgba(255,255,255,0.45) 28%
-    );
+.candy--striped-v::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 14%,
+    rgba(255,255,255,0.45) 14%,
+    rgba(255,255,255,0.45) 28%
+  );
+  pointer-events: none;
+  z-index: 2;
 }
 
 /* Wrapped — golden outer ring + spinning inner ring */

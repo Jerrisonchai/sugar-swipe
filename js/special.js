@@ -21,7 +21,7 @@ const Specials = {
 
         const overlap = this._getOverlap(hGroups[hi].cells, vGroups[vi].cells);
         if (overlap) {
-          specials.push({ row: overlap.r, col: overlap.c, type: 'wrapped' });
+          specials.push({ row: overlap.r, col: overlap.c, type: 'bomb' });
           consumed.add(hi);
           consumed.add(hGroups.length + vi);
         }

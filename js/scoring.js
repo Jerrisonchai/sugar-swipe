@@ -4,7 +4,7 @@ window._SS = window._SS || {};
 
 const Scoring = {
   /* Base points per match size */
-  MATCH_POINTS: { 3: 60, 4: 120, 5: 200, 6: 300, 7: 450, 8: 600 },
+  MATCH_POINTS: { 3: 100, 4: 200, 5: 400, 6: 600, 7: 800, 8: 1000 },
 
   /* Chain multiplier: 1x for first, 1.5x for second, 2x for third+ */
   chainMultiplier(chainIndex) {
@@ -21,7 +21,7 @@ const Scoring = {
 
   /* Calculate points for a single match group */
   calcMatchPoints(matchSize, chainIndex) {
-    const base = this.MATCH_POINTS[matchSize] || (matchSize * 50);
+    const base = this.MATCH_POINTS[matchSize] || (matchSize * 80);
     return Math.round(base * this.chainMultiplier(chainIndex));
   },
 

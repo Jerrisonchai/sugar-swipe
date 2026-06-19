@@ -7,18 +7,18 @@ const CANDY_TYPES = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
 
 const LEVELS = [
   // Phase 1 levels (1-5)
-  { id: 1, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 30, target1Star: 1500, target2Star: 3000, target3Star: 5000 },
-  { id: 2, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 28, target1Star: 2000, target2Star: 4000, target3Star: 6000 },
-  { id: 3, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 26, target1Star: 2500, target2Star: 5000, target3Star: 7500 },
-  { id: 4, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 25, target1Star: 3000, target2Star: 6000, target3Star: 9000 },
-  { id: 5, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 22, target1Star: 3500, target2Star: 7000, target3Star: 10000 },
+  { id: 1, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 30, target1Star: 1000, target2Star: 2200, target3Star: 3800 },
+  { id: 2, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 28, target1Star: 1500, target2Star: 3000, target3Star: 5000 },
+  { id: 3, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 26, target1Star: 2000, target2Star: 4000, target3Star: 6500 },
+  { id: 4, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 25, target1Star: 2500, target2Star: 5000, target3Star: 8000 },
+  { id: 5, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 22, target1Star: 3000, target2Star: 6000, target3Star: 9500 },
 
-  // Phase 2 levels (6-10) — higher targets for special candy potential
-  { id: 6, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 30, target1Star: 4000, target2Star: 8000, target3Star: 12000 },
-  { id: 7, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 28, target1Star: 5000, target2Star: 10000, target3Star: 14000 },
-  { id: 8, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 26, target1Star: 6000, target2Star: 12000, target3Star: 16000 },
-  { id: 9, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 25, target1Star: 7000, target2Star: 14000, target3Star: 18000 },
-  { id: 10, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 22, target1Star: 8000, target2Star: 15000, target3Star: 20000 },
+  // Phase 2 levels (6-10)
+  { id: 6, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 30, target1Star: 3500, target2Star: 7000, target3Star: 11000 },
+  { id: 7, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 28, target1Star: 4000, target2Star: 8000, target3Star: 12500 },
+  { id: 8, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 26, target1Star: 5000, target2Star: 10000, target3Star: 14000 },
+  { id: 9, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 25, target1Star: 6000, target2Star: 11000, target3Star: 16000 },
+  { id: 10, world: 1, worldName: 'Candy Meadow', type: 'score', rows: 8, cols: 8, moves: 22, target1Star: 7000, target2Star: 12000, target3Star: 18000 },
 ];
 
 const Levels = {
