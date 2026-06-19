@@ -3,7 +3,7 @@
 window._SS = window._SS || {};
 
 (function () {
-  const { Board, MatchEngine, Cascade, Input, UI, Scoring, Levels, Storage, Specials } = window._SS;
+  const { Board, MatchEngine, Cascade, Input, UI, Scoring, Levels, Storage, Specials, AudioFX } = window._SS;
 
   // ===== STATE =====
   const state = {
@@ -50,6 +50,8 @@ window._SS = window._SS || {};
 
     Input.on('select', (cell) => {
       if (state.phase !== 'IDLE') return;
+      AudioFX.init(); // Init audio on first user gesture
+      AudioFX.select();
       UI.highlightCell(cell.row, cell.col);
     });
 
@@ -84,6 +86,7 @@ window._SS = window._SS || {};
 
     // Animate swap
     await swapAnimate(from, to);
+    AudioFX.swap();
 
     // Check match
     const hasMatch = MatchEngine.wouldSwapMatch(Board, from.row, from.col, to.row, to.col);
@@ -117,6 +120,10 @@ window._SS = window._SS || {};
     const targetCandy = candyA.special === 'bomb' ? candyB : candyA;
 
     await swapAnimate(from, to);
+
+    // Activate bomb
+    AudioFX.specialActivate();
+    UI.showBombSweep(targetCandy.type);
 
     // Activate bomb: clears all candies of target color
     const effectCells = Specials.activate(Board, { special: 'bomb' }, bombPos.row, bombPos.col, targetCandy);
@@ -162,11 +169,32 @@ window._SS = window._SS || {};
       // 2. Check for existing specials IN the matched cells (to activate)
       const activated = Specials.findActivatedSpecials(Board, result.cells);
 
-      // 3. Expand removal set with activation effects
+      // Audio + VFX for matches
+      const maxGroupSize = Math.max(...result.groups.map(g => g.cells.length), 3);
+      if (state.chainIndex === 0) {
+        if (maxGroupSize >= 4 || newSpecials.length > 0) AudioFX.match4();
+        else AudioFX.match3();
+      } else {
+        AudioFX.cascade();
+      }
+
+      // 3. Expand removal set with activation effects + VFX
       let expandedCells = [...result.cells];
       for (const act of activated) {
         const effect = Specials.activate(Board, act.candy, act.row, act.col);
         expandedCells = expandedCells.concat(effect);
+
+        // VFX + sound for special activation
+        AudioFX.specialActivate();
+        switch (act.candy.special) {
+          case 'striped-h': UI.showStripedFlash(act.row, act.col, true); break;
+          case 'striped-v': UI.showStripedFlash(act.row, act.col, false); break;
+          case 'wrapped': UI.showWrappedExplode(act.row, act.col); break;
+          case 'bomb':
+            const targetType = CANDY_TYPES[Math.floor(Math.random() * CANDY_TYPES.length)];
+            UI.showBombSweep(targetType);
+            break;
+        }
       }
       expandedCells = dedupeCells(expandedCells);
 
@@ -255,6 +283,7 @@ window._SS = window._SS || {};
         state.level.target3Star
       );
       state.phase = 'COMPLETE';
+      AudioFX.levelComplete();
       Storage.setLevelStars(state.level.id, stars);
       Storage.setHighScore(state.level.id, state.score);
 
@@ -262,6 +291,7 @@ window._SS = window._SS || {};
       UI.showLevelComplete(stars, state.score);
     } else if (state.movesLeft <= 0) {
       state.phase = 'FAIL';
+      AudioFX.levelFail();
       await UI._sleep(400);
       UI.showLevelFail(state.score);
     } else {
@@ -274,45 +304,54 @@ window._SS = window._SS || {};
 
   function setupButtons() {
     document.getElementById('btn-next-level').addEventListener('click', () => {
+      AudioFX.buttonTap();
       const next = Levels.getNextLevel(state.level.id);
       if (next) startLevel(next.id);
     });
 
     document.getElementById('btn-replay-win').addEventListener('click', () => {
+      AudioFX.buttonTap();
       startLevel(state.level.id);
     });
 
     document.getElementById('btn-map-win').addEventListener('click', () => {
+      AudioFX.buttonTap();
       startLevel(1);
     });
 
     document.getElementById('btn-retry').addEventListener('click', () => {
+      AudioFX.buttonTap();
       startLevel(state.level.id);
     });
 
     document.getElementById('btn-map-fail').addEventListener('click', () => {
+      AudioFX.buttonTap();
       startLevel(1);
     });
 
     document.getElementById('btn-pause').addEventListener('click', () => {
       if (state.phase === 'PAUSED') return;
+      AudioFX.buttonTap();
       state.phase = 'PAUSED';
       Input.disable();
       UI.showPause();
     });
 
     document.getElementById('btn-resume').addEventListener('click', () => {
+      AudioFX.buttonTap();
       state.phase = 'IDLE';
       UI.hidePause();
       Input.enable();
     });
 
     document.getElementById('btn-restart').addEventListener('click', () => {
+      AudioFX.buttonTap();
       UI.hidePause();
       startLevel(state.level.id);
     });
 
     document.getElementById('btn-quit').addEventListener('click', () => {
+      AudioFX.buttonTap();
       UI.hidePause();
       startLevel(1);
     });

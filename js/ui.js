@@ -1,8 +1,17 @@
-/* ui.js — Rendering, HUD, screens, particles for Sugar Swipe */
+/* ui.js — Rendering, HUD, screens, particles, confetti for Sugar Swipe — Phase 3 */
 
 window._SS = window._SS || {};
 
 const UI = {
+  /* Particle color palettes per candy type */
+  PARTICLE_COLORS: {
+    red: ['#ff6b6b', '#ee5a24', '#ffcccc'],
+    orange: ['#ffa502', '#ff6348', '#ffe0b2'],
+    yellow: ['#ffd32a', '#ff9f43', '#fff9c4'],
+    green: ['#7bed9f', '#2ed573', '#c8e6c9'],
+    blue: ['#70a1ff', '#1e90ff', '#bbdefb'],
+    purple: ['#a55eea', '#8854d0', '#e1bee7'],
+  },
 
   /* ---- Board Rendering ---- */
   renderBoard(board) {
@@ -32,12 +41,11 @@ const UI = {
     }
   },
 
-  /* Get a candy DOM element at position */
   getCellEl(row, col) {
     return document.querySelector(`.candy[data-row="${row}"][data-col="${col}"]`);
   },
 
-  /* ---- Selection highlight ---- */
+  /* ---- Selection ---- */
   highlightCell(row, col) {
     this.clearHighlight();
     const el = this.getCellEl(row, col);
@@ -45,9 +53,7 @@ const UI = {
   },
 
   clearHighlight() {
-    document.querySelectorAll('.candy--selected').forEach(el => {
-      el.classList.remove('candy--selected');
-    });
+    document.querySelectorAll('.candy--selected').forEach(el => el.classList.remove('candy--selected'));
   },
 
   /* ---- Swap animation ---- */
@@ -59,8 +65,7 @@ const UI = {
     const boardEl = document.getElementById('board');
     const cellW = boardEl.clientWidth / Board.cols;
     const cellH = boardEl.clientHeight / Board.rows;
-
-    const dx = (c2 - c1) * (cellW + 4); // 4px gap
+    const dx = (c2 - c1) * (cellW + 4);
     const dy = (r2 - r1) * (cellH + 4);
 
     el1.style.transition = 'transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
@@ -69,16 +74,14 @@ const UI = {
     el2.style.transform = `translate(${-dx}px, ${-dy}px)`;
 
     setTimeout(() => {
-      el1.style.transition = 'none';
-      el2.style.transition = 'none';
-      el1.style.transform = '';
-      el2.style.transform = '';
-      this.renderBoard(Board); // Re-render to sync DOM with model
+      el1.style.transition = 'none'; el2.style.transition = 'none';
+      el1.style.transform = ''; el2.style.transform = '';
+      this.renderBoard(Board);
       onComplete?.();
     }, 220);
   },
 
-  /* ---- Match pop animation ---- */
+  /* ---- Match pop with enhanced particles ---- */
   async animateMatches(cells) {
     for (const { r, c } of cells) {
       const el = this.getCellEl(r, c);
@@ -92,23 +95,76 @@ const UI = {
 
   /* ---- Cascade animation ---- */
   animateCascade(drops, spawns) {
-    this.renderBoard(Board); // Board model already updated
-
-    // Animate spawns
+    this.renderBoard(Board);
     for (const { row, col } of spawns) {
       const el = this.getCellEl(row, col);
       if (el) el.classList.add('candy--spawning');
     }
-
-    // Drops are handled by CSS transitions in renderBoard re-render
-    // The visual difference comes from re-rendering after gravity applied
   },
 
-  /* ---- Particle burst on matched candy ---- */
+  /* ---- Special activation VFX ---- */
+  showStripedFlash(row, col, horizontal) {
+    const el = document.getElementById('board-container');
+    const rect = el.getBoundingClientRect();
+    const cellH = rect.height / Board.rows;
+    const cellW = rect.width / Board.cols;
+    const boardTop = 0;
+    const boardLeft = 0;
+
+    const flash = document.createElement('div');
+    flash.style.cssText = `
+      position:absolute; pointer-events:none; z-index:15;
+      background: rgba(255,255,255,0.7);
+      animation: stripedFlash 0.4s ease-out forwards;
+    `;
+    if (horizontal) {
+      flash.style.cssText += `left:0; top:${row * cellH}px; width:100%; height:${cellH}px;`;
+    } else {
+      flash.style.cssText += `left:${col * cellW}px; top:0; width:${cellW}px; height:100%;`;
+    }
+    el.appendChild(flash);
+    setTimeout(() => flash.remove(), 450);
+  },
+
+  showWrappedExplode(row, col) {
+    const el = document.getElementById('board-container');
+    const cell = this.getCellEl(row, col);
+    if (!cell) return;
+    const boardRect = document.getElementById('board').getBoundingClientRect();
+    const cellRect = cell.getBoundingClientRect();
+    const cx = cellRect.left - boardRect.left + cellRect.width / 2;
+    const cy = cellRect.top - boardRect.top + cellRect.height / 2;
+    const size = cellRect.width;
+
+    const ring = document.createElement('div');
+    ring.style.cssText = `
+      position:absolute; pointer-events:none; z-index:16;
+      left:${cx - size/2}px; top:${cy - size/2}px;
+      width:${size}px; height:${size}px;
+      border-radius:50%; border:3px solid rgba(255,215,0,0.8);
+      animation: wrappedExplode 0.5s ease-out forwards;
+    `;
+    el.appendChild(ring);
+    setTimeout(() => ring.remove(), 550);
+  },
+
+  showBombSweep(targetType) {
+    const colorMap = { red: '#ff6b6b', orange: '#ffa502', yellow: '#ffd32a', green: '#7bed9f', blue: '#70a1ff', purple: '#a55eea' };
+    const color = colorMap[targetType] || '#ffd700';
+    const flash = document.createElement('div');
+    flash.style.cssText = `
+      position:fixed; inset:0; pointer-events:none; z-index:50;
+      background: ${color};
+      animation: bombSweepFlash 0.6s ease-out forwards;
+    `;
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 650);
+  },
+
+  /* ---- Enhanced particle burst (15 particles, per-candy colors) ---- */
   _burstParticles(row, col, el) {
     const canvas = document.getElementById('particles');
-    if (!canvas) return;
-
+    if (!canvas || !el) return;
     const ctx = canvas.getContext('2d');
     const rect = el.getBoundingClientRect();
     const boardRect = document.getElementById('board').getBoundingClientRect();
@@ -119,79 +175,109 @@ const UI = {
     const cx = rect.left - boardRect.left + rect.width / 2;
     const cy = rect.top - boardRect.top + rect.height / 2;
 
-    const color = getComputedStyle(el).backgroundColor || '#ffd700';
-    const particles = [];
+    // Determine candy type from class
+    const type = (el.className.match(/candy-(red|orange|yellow|green|blue|purple)/) || [])[1];
+    const palette = this.PARTICLE_COLORS[type] || ['#ffffff', '#ffd700', '#ffcc00'];
 
-    for (let i = 0; i < 12; i++) {
-      const angle = (Math.PI * 2 * i) / 12 + Math.random() * 0.5;
-      const speed = 2 + Math.random() * 4;
+    const particles = [];
+    for (let i = 0; i < 15; i++) {
+      const angle = (Math.PI * 2 * i) / 15 + Math.random() * 0.5;
+      const speed = 2 + Math.random() * 5;
       particles.push({
         x: cx, y: cy,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed - 1,
-        radius: 2 + Math.random() * 4,
+        radius: 2 + Math.random() * 5,
         alpha: 1,
-        decay: 0.02 + Math.random() * 0.02,
-        color,
+        decay: 0.015 + Math.random() * 0.025,
+        color: palette[Math.floor(Math.random() * palette.length)],
       });
     }
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       let alive = false;
-
       for (const p of particles) {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.1; // gravity
+        p.x += p.vx; p.y += p.vy; p.vy += 0.1;
         p.alpha -= p.decay;
-
         if (p.alpha <= 0) continue;
         alive = true;
-
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
+        ctx.fillStyle = `rgba(255,255,255,${p.alpha * 0.8})`;
         ctx.fill();
-
         ctx.beginPath();
-        ctx.arc(p.x + 1, p.y - 1, p.radius * 0.6, 0, Math.PI * 2);
-        ctx.fillStyle = p.color.replace(')', `, ${p.alpha})`).replace('rgb', 'rgba');
+        ctx.arc(p.x, p.y, p.radius * 0.6, 0, Math.PI * 2);
+        ctx.fillStyle = `${p.color.replace(')', `, ${p.alpha})`).replace('rgb', 'rgba')}`;
         if (p.color.startsWith('#')) {
-          ctx.fillStyle = `rgba(255,255,255,${p.alpha * 0.6})`;
+          ctx.fillStyle = this._hexToRgba(p.color, p.alpha);
         }
         ctx.fill();
       }
-
-      if (alive) {
-        requestAnimationFrame(animate);
-      } else {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
+      if (alive) requestAnimationFrame(animate);
+      else ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
-
     requestAnimationFrame(animate);
   },
 
-  /* ---- Combo text popup ---- */
+  _hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  },
+
+  /* ---- Level complete confetti ---- */
+  showConfetti() {
+    const colors = ['#ff6b6b', '#ffa502', '#ffd32a', '#7bed9f', '#70a1ff', '#a55eea', '#ffd700', '#ff6348'];
+    const container = document.body;
+    const pieces = [];
+
+    for (let i = 0; i < 80; i++) {
+      const piece = document.createElement('div');
+      const size = 4 + Math.random() * 8;
+      const left = Math.random() * 100;
+      const delay = Math.random() * 0.5;
+      const duration = 1.5 + Math.random() * 2;
+      piece.style.cssText = `
+        position:fixed; pointer-events:none; z-index:100;
+        left:${left}%; top:-10px;
+        width:${size}px; height:${size}px;
+        background:${colors[Math.floor(Math.random() * colors.length)]};
+        border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
+        animation: confettiFall ${duration}s ease-in ${delay}s forwards;
+      `;
+      container.appendChild(piece);
+      pieces.push(piece);
+    }
+
+    setTimeout(() => pieces.forEach(p => p.remove()), 3500);
+  },
+
+  /* ---- Score tick-up animation ---- */
+  tickScore(newScore) {
+    const el = document.getElementById('hud-score');
+    el.classList.add('score-tick');
+    el.textContent = newScore.toLocaleString();
+    setTimeout(() => el.classList.remove('score-tick'), 200);
+  },
+
+  /* ---- Combo text ---- */
   showCombo(text) {
     if (!text) return;
-    const el = document.getElementById('combo-popup');
+    const container = document.getElementById('combo-popup');
     const span = document.createElement('div');
     span.className = 'combo-text';
     span.textContent = text;
-    el.appendChild(span);
+    container.appendChild(span);
     setTimeout(() => span.remove(), 1500);
   },
 
-  /* ---- Score popup at a position ---- */
   showScorePopup(row, col, points) {
     const el = this.getCellEl(row, col);
     if (!el) return;
-
     const boardRect = document.getElementById('board').getBoundingClientRect();
     const cellRect = el.getBoundingClientRect();
-
     const popup = document.createElement('div');
     popup.className = 'score-popup';
     popup.textContent = `+${points}`;
@@ -201,19 +287,25 @@ const UI = {
     setTimeout(() => popup.remove(), 900);
   },
 
-  /* ---- HUD Updates ---- */
+  /* ---- HUD ---- */
   updateHUD(level, score, moves) {
     document.getElementById('hud-level').textContent = level.id;
-    document.getElementById('hud-score').textContent = score.toLocaleString();
+    this.tickScore(score);
     document.getElementById('hud-target').textContent = level.target1Star.toLocaleString();
     document.getElementById('hud-moves').textContent = moves;
   },
 
-  /* ---- Screens ---- */
+  /* ---- Screens with transitions ---- */
   showScreen(screenId) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(s => {
+      if (s.classList.contains('active')) s.classList.add('screen-exit');
+      s.classList.remove('active');
+    });
     const target = document.getElementById(screenId);
-    if (target) target.classList.add('active');
+    if (target) {
+      target.classList.add('active', 'screen-enter');
+      setTimeout(() => target.classList.remove('screen-enter'), 400);
+    }
   },
 
   showLevelComplete(stars, score) {
@@ -222,10 +314,15 @@ const UI = {
     starEls.forEach((el, i) => {
       el.classList.remove('earned');
       setTimeout(() => {
-        if (i < stars) el.classList.add('earned');
+        if (i < stars) {
+          el.classList.add('earned');
+          // Sound per star
+          if (window._SS.AudioFX) window._SS.AudioFX.starEarned();
+        }
       }, i * 300);
     });
     this.showScreen('level-complete');
+    if (stars >= 2) this.showConfetti();
   },
 
   showLevelFail(score) {
@@ -245,14 +342,12 @@ const UI = {
     document.getElementById('pause-screen').classList.remove('active');
   },
 
-  /* ---- Board shake ---- */
   shakeBoard() {
     const el = document.getElementById('board');
     el.classList.add('board-shake');
     setTimeout(() => el.classList.remove('board-shake'), 500);
   },
 
-  /* ---- Utility ---- */
   _sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   },
