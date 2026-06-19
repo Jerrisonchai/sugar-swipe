@@ -29,7 +29,7 @@ const Scoring = {
   calcChainPoints(matchGroups, chainIndex) {
     let total = 0;
     for (const group of matchGroups) {
-      total += this.calcMatchPoints(group.length, chainIndex);
+      total += this.calcMatchPoints(group.cells.length, chainIndex);
     }
     return total;
   },
