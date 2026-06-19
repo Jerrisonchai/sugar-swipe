@@ -751,7 +751,8 @@ window._SS = window._SS || {};
   // ===== INIT =====
   async function init() {
 
-    Storage.sanitizeProgress(); // clean up orphaned progress entries    setupInput();
+    Storage.sanitizeProgress(); // clean up orphaned progress entries
+    setupInput();
     setupButtons();
     UI.bindSocialNav();
     await Levels.load();
