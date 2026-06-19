@@ -1,4 +1,4 @@
-/* storage.js — LocalStorage persistence for Sugar Swipe */
+/* storage.js — LocalStorage persistence for Sugar Swipe — Phase 6 */
 
 window._SS = window._SS || {};
 
@@ -29,7 +29,7 @@ const Storage = {
   /* ---- Progress ---- */
   getLevelStars(levelId) {
     const p = this.get('progress') || {};
-    return p[levelId] || 0; // 0 = not completed, 1-3 stars
+    return p[levelId] || 0;
   },
 
   setLevelStars(levelId, stars) {
@@ -56,11 +56,132 @@ const Storage = {
   },
 
   setHighScore(levelId, score) {
-    const hs = this.get('highscores') || {};
+    var hs = this.get('highscores') || {};
     if (score > (hs[levelId] || 0)) {
       hs[levelId] = score;
       this.set('highscores', hs);
     }
+  },
+
+  /* ===== LIVES ===== */
+  MAX_LIVES: 5,
+  REGEN_MINUTES: 20,
+
+  _getLivesData() {
+    return this.get('lives') || { lives: this.MAX_LIVES, lastRegenTime: Date.now() };
+  },
+
+  _saveLivesData(data) {
+    this.set('lives', data);
+  },
+
+  /** Get current lives count, applying regen */
+  getLives() {
+    var d = this._getLivesData();
+    if (d.lives >= this.MAX_LIVES) {
+      d.lastRegenTime = Date.now();
+      return d.lives;
+    }
+    var elapsedMs = Date.now() - d.lastRegenTime;
+    var regenCount = Math.floor(elapsedMs / (this.REGEN_MINUTES * 60 * 1000));
+    if (regenCount > 0) {
+      d.lives = Math.min(this.MAX_LIVES, d.lives + regenCount);
+      d.lastRegenTime = Date.now();
+      this._saveLivesData(d);
+    }
+    return d.lives;
+  },
+
+  /** Consume one life, returns new count */
+  consumeLife() {
+    var lives = this.getLives();
+    if (lives <= 0) return 0;
+    var d = this._getLivesData();
+    d.lives = Math.max(0, d.lives - 1);
+    d.lastRegenTime = Date.now(); // reset timer on consumption
+    this._saveLivesData(d);
+    return d.lives;
+  },
+
+  /** Seconds until next life regen */
+  secondsUntilNextLife() {
+    var d = this._getLivesData();
+    if (d.lives >= this.MAX_LIVES) return 0;
+    var elapsed = (Date.now() - d.lastRegenTime) / 1000;
+    var regenSec = this.REGEN_MINUTES * 60;
+    var remaining = regenSec - (elapsed % regenSec);
+    return Math.max(0, Math.ceil(remaining));
+  },
+
+  /* ===== COINS ===== */
+  getCoins() {
+    return this.get('coins') || 0;
+  },
+
+  addCoins(amount) {
+    var coins = this.getCoins() + amount;
+    this.set('coins', coins);
+    return coins;
+  },
+
+  spendCoins(amount) {
+    var coins = this.getCoins();
+    if (coins < amount) return false;
+    coins -= amount;
+    this.set('coins', coins);
+    return coins;
+  },
+
+  /* ===== BOOSTERS ===== */
+  _getBoosters() {
+    return this.get('boosters') || { moves: 2, hammer: 3, bomb: 1 };
+  },
+
+  getBoosterCount(type) {
+    return this._getBoosters()[type] || 0;
+  },
+
+  useBooster(type) {
+    var b = this._getBoosters();
+    if (!b[type] || b[type] <= 0) return false;
+    b[type]--;
+    this.set('boosters', b);
+    return true;
+  },
+
+  addBooster(type, amount) {
+    var b = this._getBoosters();
+    b[type] = (b[type] || 0) + amount;
+    this.set('boosters', b);
+  },
+
+  /* ===== ADMIN ===== */
+  /** Called by admin toggle — save current progress snapshot */
+  saveAdminSnapshot() {
+    this.set('admin_save', {
+      progress: JSON.parse(JSON.stringify(this.get('progress') || {})),
+      unlocked_world: this.getUnlockedWorld(),
+      lives: JSON.parse(JSON.stringify(this._getLivesData())),
+      coins: this.getCoins(),
+      boosters: JSON.parse(JSON.stringify(this._getBoosters())),
+    });
+  },
+
+  /** Called by admin toggle — restore original progress */
+  restoreAdminSnapshot() {
+    var save = this.get('admin_save');
+    if (!save) return;
+    this.set('progress', save.progress || {});
+    this.set('unlocked_world', save.unlocked_world || 1);
+    this.set('lives', save.lives || { lives: this.MAX_LIVES, lastRegenTime: Date.now() });
+    this.set('coins', save.coins || 0);
+    this.set('boosters', save.boosters || { moves: 2, hammer: 3, bomb: 1 });
+    this.remove('admin_save');
+  },
+
+  /** Check if admin mode is active */
+  isAdminMode() {
+    return !!this.get('admin_save');
   },
 };
 

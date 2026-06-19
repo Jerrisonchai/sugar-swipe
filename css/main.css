@@ -104,6 +104,7 @@ html, body {
 }
 
 .hud-score .hud-value { color: var(--gold-solid); }
+.hud-lives .hud-value { font-size: clamp(12px, 3vw, 16px); letter-spacing: 2px; }
 
 /* ===== BOARD ===== */
 #board-wrapper {
@@ -175,11 +176,37 @@ html, body {
   cursor: pointer;
   transition: transform 0.15s, background 0.15s;
   gap: 2px;
+  position: relative;
+  touch-action: manipulation;
 }
 
 .btn--booster:active:not(.disabled) {
   transform: scale(0.92);
   background: rgba(255,255,255,0.15);
+}
+
+.btn--booster.active {
+  border-color: var(--gold-solid);
+  background: rgba(255,215,0,0.18);
+  box-shadow: 0 0 16px rgba(255,215,0,0.3);
+}
+
+.booster-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-family: var(--font-heading);
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  line-height: 1;
 }
 
 .btn--booster.disabled,
@@ -310,6 +337,12 @@ html, body {
 .pause-panel {
   width: 70%;
   max-width: 300px;
+}
+
+/* ===== OUT OF LIVES ===== */
+.lives-empty-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
 }
 
 /* ===== SCROLLABLE CONTAINERS (future: leaderboard, shop) ===== */

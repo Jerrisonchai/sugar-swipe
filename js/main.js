@@ -1,9 +1,10 @@
-/* main.js — Game loop & state machine for Sugar Swipe — Phase 2 */
+/* main.js — Game loop, state machine, lives, boosters — Phase 6 */
 
 window._SS = window._SS || {};
 
 (function () {
   const { Board, MatchEngine, Cascade, Input, UI, Scoring, Levels, Storage, Specials, AudioFX, Obstacles } = window._SS;
+  const CANDY_TYPES = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
 
   // ===== STATE =====
   const state = {
@@ -11,8 +12,11 @@ window._SS = window._SS || {};
     score: 0,
     movesLeft: 0,
     chainIndex: 0,
-    jellyLeft: 0,     // remaining jelly cells (0 for score levels)
+    jellyLeft: 0,
     phase: 'IDLE',
+    hammerMode: false,    // true when hammer booster active
+    extraMovesUsed: 0,    // count of extra moves purchased this level
+    levelStarted: false,  // whether lives have been consumed for this attempt
   };
 
   // ===== GAME LOOP =====
@@ -20,15 +24,33 @@ window._SS = window._SS || {};
   async function startLevel(levelId) {
     await Levels.load();
     const level = Levels.getById(levelId);
+    if (!level) return;
+
+    // Check lives
+    const lives = Storage.getLives();
+    if (lives <= 0) {
+      showNoLives(levelId);
+      return;
+    }
+
+    // Consume a life when starting a fresh attempt (not retry)
+    if (!state.levelStarted) {
+      Storage.consumeLife();
+      state.levelStarted = true;
+    }
+
     state.level = level;
     state.score = 0;
     state.movesLeft = level.moves;
     state.chainIndex = 0;
     state.phase = 'IDLE';
+    state.hammerMode = false;
+    state.extraMovesUsed = 0;
+    state.levelStarted = true;
 
     Board.init(level.rows, level.cols);
+    deactivateAllBoosters();
 
-    // Place obstacles and jelly from level data
     if (level.obstacles && level.obstacles.length > 0) {
       Obstacles.placeAll(Board, level.obstacles);
     }
@@ -40,6 +62,8 @@ window._SS = window._SS || {};
     }
 
     UI.renderBoard(Board);
+    updateLivesDisplay();
+    updateBoosterCounts();
     UI.updateHUD(level, state.score, state.movesLeft, state.jellyLeft);
     UI.showGameScreen();
     Input.enable();
@@ -58,30 +82,111 @@ window._SS = window._SS || {};
   }
 
   // ===== INPUT SETUP =====
-
   function setupInput() {
     Input.init(Board, document.getElementById('board'));
 
     Input.on('select', (cell) => {
       if (state.phase !== 'IDLE') return;
-      AudioFX.init(); // Init audio on first user gesture
+      AudioFX.init();
+
+      // Hammer mode: destroy cell immediately
+      if (state.hammerMode) {
+        useHammer(cell.row, cell.col);
+        return;
+      }
+
       AudioFX.select();
       UI.highlightCell(cell.row, cell.col);
     });
 
     Input.on('deselect', () => {
-      if (state.phase !== 'IDLE') return;
+      if (state.phase !== 'IDLE' || state.hammerMode) return;
       UI.clearHighlight();
     });
 
     Input.on('swap', (data) => {
-      if (state.phase !== 'IDLE') return;
+      if (state.phase !== 'IDLE' || state.hammerMode) return;
       handleSwap(data.from, data.to);
     });
   }
 
-  // ===== SWAP HANDLER =====
+  // ===== HAMMER BOOSTER =====
+  async function useHammer(r, c) {
+    if (!state.hammerMode) return;
+    state.hammerMode = false;
+    deactivateAllBoosters();
 
+    // Destroy cell contents: candy, obstacle, everything
+    const cells = [{ r, c }];
+
+    // Score a small amount
+    state.score += 100;
+    AudioFX.specialActivate();
+    UI.showWrappedExplode(r, c); // reuse wrapped VFX for hammer
+    state.phase = 'MATCHING';
+    await UI.animateMatches(cells);
+    Board.removeCells(cells);
+
+    // Also destroy obstacle
+    if (Board.hasObstacle(r, c)) {
+      Board.damageObstacle(r, c);
+      if (Board.hasObstacle(r, c)) {
+        Board.damageObstacle(r, c); // second hit for 2-layer
+      }
+      UI.showIceBreak(r, c);
+    }
+
+    // Clear jelly if present
+    if (Board.hasJelly(r, c)) {
+      Board.clearJelly(r, c);
+      if (state.jellyLeft > 0) state.jellyLeft--;
+    }
+
+    // Cascade
+    state.phase = 'CASCADING';
+    const { drops, spawns } = Cascade.applyGravity(Board);
+    UI.animateCascade(drops, spawns);
+    await UI._sleep(400);
+
+    // Process chain reactions
+    state.chainIndex = 0;
+    await processMatchLoop();
+
+    state.movesLeft--;
+    updateLivesDisplay();
+    updateBoosterCounts();
+    UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
+    await checkEndCondition();
+  }
+
+  // ===== BOMB BOOSTER =====
+  async function useBomb() {
+    // Place a color bomb at a random cell that's not blocked
+    const validCells = [];
+    for (let r = 0; r < Board.rows; r++) {
+      for (let c = 0; c < Board.cols; c++) {
+        if (!Board.hasObstacle(r, c)) validCells.push({ r, c });
+      }
+    }
+    if (validCells.length === 0) return;
+
+    const pos = validCells[Math.floor(Math.random() * validCells.length)];
+    Board.set(pos.r, pos.c, {
+      type: CANDY_TYPES[Math.floor(Math.random() * CANDY_TYPES.length)],
+      special: 'bomb'
+    });
+    AudioFX.specialActivate();
+    UI.showBombSweep('bomb');
+    UI.renderBoard(Board);
+    await UI._sleep(500);
+
+    state.movesLeft--;
+    updateBoosterCounts();
+    UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
+    await checkEndCondition();
+  }
+
+  // ===== SWAP HANDLER =====
   async function handleSwap(from, to) {
     const candyA = Board.get(from.row, from.col);
     const candyB = Board.get(to.row, to.col);
@@ -91,22 +196,17 @@ window._SS = window._SS || {};
     Input.disable();
     UI.clearHighlight();
 
-    // --- SPECIAL SWAP: Bomb + Regular candy ---
     if ((candyA.special === 'bomb' && !candyB.special) ||
         (candyB.special === 'bomb' && !candyA.special)) {
       await handleBombSwap(from, to, candyA, candyB);
       return;
     }
 
-    // Animate swap
     await swapAnimate(from, to);
     AudioFX.swap();
 
-    // Check match
     const hasMatch = MatchEngine.wouldSwapMatch(Board, from.row, from.col, to.row, to.col);
-
     if (!hasMatch) {
-      // Invalid swap — undo
       await swapAnimate(from, to);
       UI.shakeBoard();
       state.phase = 'IDLE';
@@ -114,76 +214,53 @@ window._SS = window._SS || {};
       return;
     }
 
-    // Commit swap
     Board.swap(from.row, from.col, to.row, to.col);
     UI.renderBoard(Board);
 
-    // Process all matches, specials & cascades
     state.chainIndex = 0;
     await processMatchLoop();
 
     state.movesLeft--;
+    updateLivesDisplay();
+    updateBoosterCounts();
     UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
     await checkEndCondition();
   }
-
-  // ===== BOMB SWAP =====
 
   async function handleBombSwap(from, to, candyA, candyB) {
     const bombPos = candyA.special === 'bomb' ? from : to;
     const targetCandy = candyA.special === 'bomb' ? candyB : candyA;
-
     await swapAnimate(from, to);
-
-    // Activate bomb
     AudioFX.specialActivate();
     UI.showBombSweep(targetCandy.type);
-
-    // Activate bomb: clears all candies of target color
     const effectCells = Specials.activate(Board, { special: 'bomb' }, bombPos.row, bombPos.col, targetCandy);
-
-    // Merge bomb position and effect cells, deduplicate
     const uniq = dedupeCells([...effectCells, { r: bombPos.row, c: bombPos.col }]);
-
-    // Score the mass clear
     const points = uniq.length * 35;
     state.score += points;
     UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
     UI.showCombo('Color Bomb!');
-
-    // Animate and remove
     state.phase = 'MATCHING';
     await UI.animateMatches(uniq);
     Board.removeCells(uniq);
-
-    // Cascade
     state.phase = 'CASCADING';
     const { drops, spawns } = Cascade.applyGravity(Board);
     UI.animateCascade(drops, spawns);
     await UI._sleep(450);
-
-    // Process chain reactions
     state.chainIndex = 1;
     await processMatchLoop();
-
     state.movesLeft--;
+    updateLivesDisplay();
+    updateBoosterCounts();
     UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
     await checkEndCondition();
   }
 
-  // ===== MATCH LOOP (with special candy creation & activation) =====
-
+  // ===== MATCH LOOP =====
   async function processMatchLoop() {
     let result = MatchEngine.findMatches(Board);
-
     while (result.hasMatch) {
-      // 1. Detect specials to CREATE from match groups
       const newSpecials = Specials.detectCreations(result.groups);
-
-      // 2. Check for existing specials IN the matched cells (to activate)
       const activated = Specials.findActivatedSpecials(Board, result.cells);
-
-      // Audio + VFX for matches
       const maxGroupSize = Math.max(...result.groups.map(g => g.cells.length), 3);
       if (state.chainIndex === 0) {
         if (maxGroupSize >= 4 || newSpecials.length > 0) AudioFX.match4();
@@ -192,13 +269,10 @@ window._SS = window._SS || {};
         AudioFX.cascade();
       }
 
-      // 3. Expand removal set with activation effects + VFX
       let expandedCells = [...result.cells];
       for (const act of activated) {
         const effect = Specials.activate(Board, act.candy, act.row, act.col);
         expandedCells = expandedCells.concat(effect);
-
-        // VFX + sound for special activation
         AudioFX.specialActivate();
         switch (act.candy.special) {
           case 'striped-h': UI.showStripedFlash(act.row, act.col, true); break;
@@ -212,70 +286,56 @@ window._SS = window._SS || {};
       }
       expandedCells = dedupeCells(expandedCells);
 
-      // 4. Calculate and add points (base match points + extra for special clears)
       const basePoints = Scoring.calcChainPoints(result.groups, state.chainIndex);
       const bonusPoints = (expandedCells.length - result.cells.length) * 20;
-      const points = basePoints + bonusPoints;
-      state.score += points;
+      state.score += basePoints + bonusPoints;
       UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
 
-      // Show combo
       const comboText = Scoring.comboName(state.chainIndex);
       if (comboText) UI.showCombo(comboText);
 
-      // 5. Animate match removal
       state.phase = 'MATCHING';
       await UI.animateMatches(expandedCells);
-
-      // 6. Remove all cells from model
       Board.removeCells(expandedCells);
 
-      // 6b. Damage adjacent obstacles + clear jelly on matched cells
       const destroyed = Obstacles.damageFromMatches(Board, expandedCells);
       for (const d of destroyed) UI.showIceBreak(d.row, d.col);
       if (state.jellyLeft > 0) {
         const cleared = Obstacles.clearJellyFromMatches(Board, expandedCells);
         state.jellyLeft -= cleared;
       }
-      UI.renderBoard(Board); // Re-render to show obstacle/jelly changes
+      UI.renderBoard(Board);
 
-      // 7. Place newly created specials on the board
       for (const sp of newSpecials) {
-        Board.set(sp.row, sp.col, { type: CANDY_TYPES[Math.floor(Math.random() * CANDY_TYPES.length)], special: sp.type });
+        Board.set(sp.row, sp.col, {
+          type: CANDY_TYPES[Math.floor(Math.random() * CANDY_TYPES.length)],
+          special: sp.type
+        });
       }
 
-      // 8. Cascade
       state.phase = 'CASCADING';
       const { drops, spawns } = Cascade.applyGravity(Board);
       UI.animateCascade(drops, spawns);
       await UI._sleep(450);
 
-      // 9. Re-check for chain matches
       state.chainIndex++;
       result = MatchEngine.findMatches(Board);
     }
 
-    // Stalemate check
     if (state.movesLeft > 0 && state.phase !== 'COMPLETE' && state.phase !== 'FAIL') {
       const validMove = MatchEngine.findValidMove(Board);
-      if (!validMove) {
-        await reshuffleBoard();
-      }
+      if (!validMove) await reshuffleBoard();
     }
   }
 
   // ===== UTILITY =====
-
   function dedupeCells(cells) {
     const seen = new Set();
     const uniq = [];
     for (const { r, c } of cells) {
       if (r < 0 || r >= Board.rows || c < 0 || c >= Board.cols) continue;
       const key = `${r},${c}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        uniq.push({ r, c });
-      }
+      if (!seen.has(key)) { seen.add(key); uniq.push({ r, c }); }
     }
     return uniq;
   }
@@ -293,34 +353,105 @@ window._SS = window._SS || {};
     await clearInitialMatches();
   }
 
-  // ===== END CONDITIONS =====
+  // ===== LIVES =====
+  function updateLivesDisplay() {
+    const lives = Storage.getLives();
+    const el = document.getElementById('hud-lives');
+    if (el) {
+      el.textContent = '❤️'.repeat(Math.max(0, lives)) + '🖤'.repeat(Math.max(0, 5 - lives));
+    }
+  }
 
+  function showNoLives(levelId) {
+    UI.showScreen('no-lives');
+    document.getElementById('btn-refill-lives').onclick = () => {
+      AudioFX.buttonTap();
+      if (Storage.spendCoins(100)) {
+        Storage.set('lives', { lives: Storage.MAX_LIVES, lastRegenTime: Date.now() });
+        document.getElementById('no-lives').classList.remove('active');
+        state.levelStarted = false; // Allow life consume on next attempt
+        startLevel(levelId);
+      }
+    };
+    document.getElementById('btn-wait-lives').onclick = () => {
+      AudioFX.buttonTap();
+      document.getElementById('no-lives').classList.remove('active');
+      state.levelStarted = false;
+      UI.showWorldMap();
+    };
+    startLivesTimer(levelId);
+  }
+
+  function startLivesTimer(levelId) {
+    const el = document.getElementById('lives-timer');
+    function tick() {
+      const sec = Storage.secondsUntilNextLife();
+      if (sec <= 0) {
+        el.textContent = 'Tap to play!';
+        if (document.getElementById('no-lives') && document.getElementById('no-lives').classList.contains('active')) {
+          document.getElementById('no-lives').classList.remove('active');
+          state.levelStarted = false;
+          startLevel(levelId);
+        }
+        return;
+      }
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      el.textContent = `Next life in ${m}:${s.toString().padStart(2, '0')}`;
+      setTimeout(tick, 1000);
+    }
+    tick();
+  }
+
+  // ===== BOOSTERS =====
+  function updateBoosterCounts() {
+    const countMoves = document.getElementById('count-moves');
+    const countHammer = document.getElementById('count-hammer');
+    const countBomb = document.getElementById('count-bomb');
+    if (countMoves) countMoves.textContent = Storage.getBoosterCount('moves');
+    if (countHammer) countHammer.textContent = Storage.getBoosterCount('hammer');
+    if (countBomb) countBomb.textContent = Storage.getBoosterCount('bomb');
+
+    // Disable buttons with 0 count
+    const btnMoves = document.getElementById('booster-moves');
+    const btnHammer = document.getElementById('booster-hammer');
+    const btnBomb = document.getElementById('booster-bomb');
+    [btnMoves, btnHammer, btnBomb].forEach(b => { if (b) b.classList.remove('disabled'); });
+    if (btnMoves && Storage.getBoosterCount('moves') <= 0) btnMoves.classList.add('disabled');
+    if (btnHammer && Storage.getBoosterCount('hammer') <= 0) btnHammer.classList.add('disabled');
+    if (btnBomb && Storage.getBoosterCount('bomb') <= 0) btnBomb.classList.add('disabled');
+  }
+
+  function deactivateAllBoosters() {
+    const btnHammer = document.getElementById('booster-hammer');
+    const btnBomb = document.getElementById('booster-bomb');
+    if (btnHammer) btnHammer.classList.remove('active');
+    if (btnBomb) btnBomb.classList.remove('active');
+    state.hammerMode = false;
+  }
+
+  // ===== END CONDITIONS =====
   async function checkEndCondition() {
     const isJellyLevel = state.level.type === 'jelly';
     const jellyCleared = isJellyLevel && state.jellyLeft === 0;
     const scoreMet = state.score >= state.level.target1Star;
     const movesExhausted = state.movesLeft <= 0;
-
-    // Win: score met (for score levels) OR score+jelly met (for jelly levels)
     const won = isJellyLevel ? (jellyCleared && scoreMet) : scoreMet;
-    // Fail: moves exhausted without meeting win conditions
     const failed = movesExhausted && !won;
 
     if (won) {
       const stars = Scoring.calcStars(
-        state.score,
-        state.movesLeft,
-        state.level.moves,
-        state.level.target1Star,
-        state.level.target2Star,
-        state.level.target3Star
+        state.score, state.movesLeft, state.level.moves,
+        state.level.target1Star, state.level.target2Star, state.level.target3Star
       );
       state.phase = 'COMPLETE';
       AudioFX.levelComplete();
       Storage.setLevelStars(state.level.id, stars);
       Storage.setHighScore(state.level.id, state.score);
 
-      // Unlock next world if all levels in current world completed
+      // Award coins: 50 per star
+      Storage.addCoins(stars * 50);
+
       const worldLevels = Levels.getAll().filter(l => l.world === state.level.world);
       const allComplete = worldLevels.every(l => Storage.getLevelStars(l.id) > 0);
       if (allComplete && state.level.world < 6) {
@@ -329,22 +460,36 @@ window._SS = window._SS || {};
 
       await UI._sleep(400);
       UI.showLevelComplete(stars, state.score);
+      state.levelStarted = false;
 
-      // Update Next Level button to go to level grid
       document.getElementById('btn-next-level').onclick = () => {
         AudioFX.buttonTap();
         const next = Levels.getNextLevel(state.level.id);
-        if (next) {
-          startLevel(next.id);
-        } else {
-          gotoWorldMap();
-        }
+        if (next) startLevel(next.id);
+        else gotoWorldMap();
       };
     } else if (failed) {
+      // On first fail, show extra moves option
       state.phase = 'FAIL';
       AudioFX.levelFail();
       await UI._sleep(400);
-      UI.showLevelFail(state.score);
+      UI.showLevelFail(state.score, state.level.id);
+      state.levelStarted = false; // Allow life on next attempt
+
+      // Enable/disable extra moves button based on coins
+      const btnExtra = document.getElementById('btn-extra-moves');
+      if (btnExtra) {
+        const coins = Storage.getCoins();
+        if (coins >= 10) {
+          btnExtra.classList.remove('disabled');
+          btnExtra.disabled = false;
+          btnExtra.textContent = '+5 Moves (10 🪙)';
+        } else {
+          btnExtra.classList.add('disabled');
+          btnExtra.disabled = true;
+          btnExtra.textContent = '+5 Moves (need 10 🪙)';
+        }
+      }
     } else {
       state.phase = 'IDLE';
       Input.enable();
@@ -352,7 +497,6 @@ window._SS = window._SS || {};
   }
 
   // ===== SCREEN BUTTONS =====
-
   function setupButtons() {
     document.getElementById('btn-next-level').addEventListener('click', () => {
       AudioFX.buttonTap();
@@ -362,6 +506,10 @@ window._SS = window._SS || {};
 
     document.getElementById('btn-replay-win').addEventListener('click', () => {
       AudioFX.buttonTap();
+      if (Storage.getLives() <= 0) {
+        showNoLives(state.level.id);
+        return;
+      }
       startLevel(state.level.id);
     });
 
@@ -372,7 +520,25 @@ window._SS = window._SS || {};
 
     document.getElementById('btn-retry').addEventListener('click', () => {
       AudioFX.buttonTap();
+      if (Storage.getLives() <= 0) {
+        document.getElementById('level-fail').classList.remove('active');
+        showNoLives(state.level.id);
+        return;
+      }
       startLevel(state.level.id);
+    });
+
+    document.getElementById('btn-extra-moves').addEventListener('click', () => {
+      AudioFX.buttonTap();
+      if (Storage.spendCoins(10)) {
+        state.movesLeft += 5;
+        state.extraMovesUsed += 5;
+        state.phase = 'IDLE';
+        Input.enable();
+        document.getElementById('level-fail').classList.remove('active');
+        UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
+        updateLivesDisplay();
+      }
     });
 
     document.getElementById('btn-map-fail').addEventListener('click', () => {
@@ -398,6 +564,10 @@ window._SS = window._SS || {};
     document.getElementById('btn-restart').addEventListener('click', () => {
       AudioFX.buttonTap();
       UI.hidePause();
+      if (Storage.getLives() <= 0) {
+        showNoLives(state.level.id);
+        return;
+      }
       startLevel(state.level.id);
     });
 
@@ -407,7 +577,48 @@ window._SS = window._SS || {};
       gotoWorldMap();
     });
 
-    // Admin debug toggle
+    // ---- Booster buttons ----
+    const btnMoves = document.getElementById('booster-moves');
+    const btnHammer = document.getElementById('booster-hammer');
+    const btnBomb = document.getElementById('booster-bomb');
+
+    if (btnMoves) {
+      btnMoves.addEventListener('click', () => {
+        if (state.phase !== 'IDLE') return;
+        if (state.hammerMode) { deactivateAllBoosters(); return; }
+        if (!Storage.useBooster('moves')) return;
+        AudioFX.buttonTap();
+        state.movesLeft += 3;
+        updateBoosterCounts();
+        UI.updateHUD(state.level, state.score, state.movesLeft, state.jellyLeft);
+      });
+    }
+
+    if (btnHammer) {
+      btnHammer.addEventListener('click', () => {
+        if (state.phase !== 'IDLE') return;
+        if (state.hammerMode) { deactivateAllBoosters(); return; }
+        if (Storage.getBoosterCount('hammer') <= 0) return;
+        AudioFX.buttonTap();
+        state.hammerMode = true;
+        btnHammer.classList.add('active');
+        btnBomb && btnBomb.classList.remove('active');
+        UI.clearHighlight();
+        UI.showCombo('Tap a candy to smash!');
+      });
+    }
+
+    if (btnBomb) {
+      btnBomb.addEventListener('click', () => {
+        if (state.phase !== 'IDLE') return;
+        if (state.hammerMode) { deactivateAllBoosters(); return; }
+        if (Storage.getBoosterCount('bomb') <= 0) return;
+        if (!Storage.useBooster('bomb')) return;
+        deactivateAllBoosters();
+        useBomb();
+      });
+    }
+
     setupAdminToggle();
   }
 
@@ -418,34 +629,21 @@ window._SS = window._SS || {};
     btn.addEventListener('click', () => {
       const active = btn.classList.contains('active');
       if (active) {
-        // Restore original progress
-        const save = Storage.get('admin_save');
-        if (save) {
-          Storage.set('progress', save.progress || {});
-          Storage.set('unlocked_world', save.unlocked_world || 1);
-          Storage.remove('admin_save');
-        }
+        Storage.restoreAdminSnapshot();
         btn.classList.remove('active');
         btn.title = 'Admin Mode';
       } else {
-        // Save current state and unlock everything
-        const currentProgress = Storage.get('progress') || {};
-        const currentUnlocked = Storage.getUnlockedWorld();
-        Storage.set('admin_save', {
-          progress: JSON.parse(JSON.stringify(currentProgress)),
-          unlocked_world: currentUnlocked
-        });
-        // Unlock all 60 levels with 3 stars each
+        Storage.saveAdminSnapshot();
         const adminProgress = {};
-        for (let i = 1; i <= 60; i++) {
-          adminProgress[i] = 3;
-        }
+        for (let i = 1; i <= 60; i++) adminProgress[i] = 3;
         Storage.set('progress', adminProgress);
         Storage.setUnlockedWorld(6);
+        Storage.set('coins', 9999);
+        Storage.set('boosters', { moves: 99, hammer: 99, bomb: 99 });
+        Storage.set('lives', { lives: 5, lastRegenTime: Date.now() + 365*24*3600000 });
         btn.classList.add('active');
         btn.title = 'Admin Mode ON — click to restore';
       }
-      // Refresh current screen
       if (document.getElementById('world-map').classList.contains('active')) {
         UI.showWorldMap();
       } else if (document.getElementById('level-grid').classList.contains('active')) {
@@ -458,7 +656,13 @@ window._SS = window._SS || {};
 
   function gotoWorldMap() {
     document.querySelectorAll('.screen.overlay').forEach(s => s.classList.remove('active'));
-    UI.showLevelGrid(state.level.world);
+    state.levelStarted = false;
+    deactivateAllBoosters();
+    if (state.level) {
+      UI.showLevelGrid(state.level.world);
+    } else {
+      UI.showWorldMap();
+    }
   }
 
   // ===== INIT =====
@@ -469,7 +673,6 @@ window._SS = window._SS || {};
     UI.showWorldMap();
   }
 
-  // Export for UI level-grid callbacks
   window._SS._startLevel = startLevel;
 
   if (document.readyState === 'loading') {

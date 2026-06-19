@@ -10,9 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/main.css?v=9">
-<link rel="stylesheet" href="css/animations.css?v=9">
-<link rel="stylesheet" href="css/candy-designs.css?v=9">
+<link rel="stylesheet" href="css/main.css?v=10">
+<link rel="stylesheet" href="css/animations.css?v=10">
+<link rel="stylesheet" href="css/candy-designs.css?v=10">
 </head>
 <body>
 
@@ -22,7 +22,7 @@
   <div id="world-map" class="screen active">
     <div class="map-header">
       <h1 class="map-title">🍬 Sugar Swipe</h1>
-      <p class="map-sub">Tap a world to play</p>
+      <p class="map-sub"> ❤️ <span id="map-lives">5</span> &nbsp;|&nbsp; 🪙 <span id="map-coins">0</span></p>
     </div>
     <div id="world-list" class="world-list"></div>
   </div>
@@ -61,6 +61,10 @@
         <span id="hud-target" class="hud-value">1000</span>
       </div>
       <div class="hud-item">
+        <span class="hud-label">Lives</span>
+        <span id="hud-lives" class="hud-value">❤️❤️❤️</span>
+      </div>
+      <div class="hud-item">
         <span class="hud-label">Moves</span>
         <span id="hud-moves" class="hud-value">25</span>
       </div>
@@ -79,22 +83,38 @@
     </div>
 
     <div class="booster-tray">
-      <button class="btn--booster disabled" disabled title="+3 Moves">
+      <button id="booster-moves" class="btn--booster" title="+3 Moves">
         <span class="booster-icon">+3</span>
         <span class="booster-label">Moves</span>
+        <span class="booster-count" id="count-moves">0</span>
       </button>
-      <button class="btn--booster disabled" disabled title="Lollipop Hammer">
-        <span class="booster-icon">🔨</span>
+      <button id="booster-hammer" class="btn--booster" title="Lollipop Hammer">
+        <span class="booster-icon">🍭</span>
         <span class="booster-label">Hammer</span>
+        <span class="booster-count" id="count-hammer">0</span>
       </button>
-      <button class="btn--booster disabled" disabled title="Color Bomb">
+      <button id="booster-bomb" class="btn--booster" title="Color Bomb">
         <span class="booster-icon">💣</span>
         <span class="booster-label">Bomb</span>
+        <span class="booster-count" id="count-bomb">0</span>
       </button>
       <button id="btn-pause" class="btn--booster" title="Pause">
         <span class="booster-icon">⏸</span>
         <span class="booster-label">Pause</span>
       </button>
+    </div>
+  </div>
+
+  <!-- ===== OUT OF LIVES SCREEN ===== -->
+  <div id="no-lives" class="screen overlay">
+    <div class="glass-panel result-panel">
+      <div class="lives-empty-icon">💔</div>
+      <h2 class="result-title">Out of Lives!</h2>
+      <p id="lives-timer" class="result-sub">Next life in 20:00</p>
+      <div class="result-buttons">
+        <button id="btn-refill-lives" class="btn btn--primary">Refill (100 🪙)</button>
+        <button id="btn-wait-lives" class="btn btn--secondary">Back to Map</button>
+      </div>
     </div>
   </div>
 
@@ -124,7 +144,7 @@
       <div id="fail-score" class="result-score">Score: 0</div>
       <div class="result-buttons">
         <button id="btn-retry" class="btn btn--primary">Try Again</button>
-        <button id="btn-extra-moves" class="btn btn--secondary disabled" disabled>+5 Moves (10 🪙)</button>
+        <button id="btn-extra-moves" class="btn btn--secondary">+5 Moves (10 🪙)</button>
         <button id="btn-map-fail" class="btn btn--secondary">World Map</button>
       </div>
     </div>
@@ -149,12 +169,12 @@
 <script src="js/levels.js?v=3"></script>
 <script src="js/board.js?v=3"></script>
 <script src="js/match-engine.js?v=3"></script>
-<script src="js/special.js?v=9"></script>
-<script src="js/obstacles.js?v=9"></script>
-<script src="js/audio.js?v=9"></script>
-<script src="js/cascade.js?v=9"></script>
-<script src="js/input.js?v=9"></script>
-<script src="js/ui.js?v=9"></script>
-<script src="js/main.js?v=9"></script>
+<script src="js/special.js?v=10"></script>
+<script src="js/obstacles.js?v=10"></script>
+<script src="js/audio.js?v=10"></script>
+<script src="js/cascade.js?v=10"></script>
+<script src="js/input.js?v=10"></script>
+<script src="js/ui.js?v=10"></script>
+<script src="js/main.js?v=10"></script>
 </body>
 </html>
