@@ -196,9 +196,30 @@ const EventManager = {
     this.getChallenges();
     var d = this._getData();
     var ch = d.challenges;
-    if (!ch || !ch.items || !ch.items[index]) return null;
-    if (ch.claimed[index]) return null;
-    if ((ch.progress[index] || 0) < ch.items[index].target) return null;
+    if (!ch || !ch.items || !ch.items[index]) { console.warn('[claimChallenge] invalid challenge:', index, ch); return null; }
+    if (ch.claimed[index]) { console.warn('[claimChallenge] already claimed:', index); return null; }
+    // Sync progress from weeklyTotals to ensure freshness
+    var totals = d.weeklyTotals || this.getWeeklyTotals();
+    var mapping = {
+      'levelsCompleted': totals.levels,
+      'starsEarned': totals.stars,
+      'specialsCreated': totals.specials,
+      'obstaclesCleared': totals.obstacles,
+      'totalScore': totals.score,
+      'world2plusLevels': totals.worlds2plus,
+      'boostersUsed': totals.boosters,
+      'iceCleared': totals.obstacles,
+      'jellyCleared': totals.obstacles,
+      'candiesMatched': totals.candies,
+    };
+    var trackType = ch.items[index].track;
+    if (mapping[trackType] !== undefined) {
+      ch.progress[index] = Math.min(ch.items[index].target, mapping[trackType]);
+    }
+    var curProg = ch.progress[index] || 0;
+    var target = ch.items[index].target;
+    console.log('[claimChallenge] idx=' + index + ' track=' + trackType + ' prog=' + curProg + ' target=' + target + ' claimed=' + ch.claimed[index]);
+    if (curProg < target) { console.warn('[claimChallenge] progress insufficient:', curProg, '<', target); return null; }
 
     ch.claimed[index] = true;
     d.challenges = ch;

@@ -1056,19 +1056,8 @@ const UI = {
       }
     };
 
-    // Challenge claim buttons
-    document.querySelectorAll('.btn--claim').forEach(function(btn) {
-      btn.onclick = function() {
-        var idx = parseInt(this.dataset.idx);
-        var AudioFX = window._SS.AudioFX;
-        if (AudioFX) AudioFX.challengeComplete();
-        var result = window._SS.EventManager.claimChallenge(idx);
-        if (result) {
-          self._renderChallenges();
-          self._updateEventBadge();
-        }
-      };
-    });
+    // Challenge claim buttons — delegated to _bindClaimButtons
+    self._bindClaimButtons();
   },
 
   _switchEventTab(tab) {
@@ -1216,7 +1205,29 @@ const UI = {
       html += '</div>';
     }
     list.innerHTML = html;
-    } catch(e) { list.innerHTML = '<p class="spin-status">No challenges available</p>'; }
+    // Re-bind claim buttons (needed when _renderChallenges is called standalone, not just from showEvents)
+    self._bindClaimButtons();
+    } catch(e) { list.innerHTML = '<p class="spin-status">No challenges available</p>'; console.warn('_renderChallenges error:', e); }
+  },
+
+  _bindClaimButtons() {
+    var self = this;
+    document.querySelectorAll('.btn--claim').forEach(function(btn) {
+      btn.onclick = function() {
+        var idx = parseInt(this.dataset.idx);
+        console.log('[claimBtn] clicked idx=' + idx);
+        var AudioFX = window._SS.AudioFX;
+        if (AudioFX) AudioFX.challengeComplete();
+        var result = window._SS.EventManager.claimChallenge(idx);
+        if (result) {
+          console.log('[claimBtn] claim success:', result);
+          self._renderChallenges();
+          self._updateEventBadge();
+        } else {
+          console.warn('[claimBtn] claim failed for idx=' + idx);
+        }
+      };
+    });
   },
 
   _renderStreaks() {
