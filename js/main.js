@@ -248,6 +248,8 @@ window._SS = window._SS || {};
     if (state.score >= state.level.target1Star) {
       const stars = Scoring.calcStars(
         state.score,
+        state.movesLeft,
+        state.level.moves,
         state.level.target1Star,
         state.level.target2Star,
         state.level.target3Star

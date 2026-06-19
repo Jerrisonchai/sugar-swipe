@@ -34,10 +34,14 @@ const Scoring = {
     return total;
   },
 
-  /* Star rating based on score vs level target */
-  calcStars(score, target1Star, target2Star, target3Star) {
-    if (score >= target3Star) return 3;
-    if (score >= target2Star) return 2;
+  /* Star rating — rewards efficiency: finishing with fewer moves boosts score
+     Formula: adjustedScore = score * (1 + movesLeft/totalMoves)
+     2 moves out of 30 → 1.93x multiplier. 30 moves → 1.0x. */
+  calcStars(score, movesLeft, totalMoves, target1Star, target2Star, target3Star) {
+    const efficiency = movesLeft / totalMoves;
+    const adjusted = Math.round(score * (1 + efficiency));
+    if (adjusted >= target3Star) return 3;
+    if (adjusted >= target2Star) return 2;
     if (score >= target1Star) return 1;
     return 0;
   },
