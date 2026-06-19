@@ -11,7 +11,7 @@ const Levels = {
   async load() {
     if (this._data) return this._data;
     try {
-      const resp = await fetch('data/levels.json?v=7');
+      const resp = await fetch('data/levels.json?v=8');
       this._data = await resp.json();
     } catch (e) {
       // Fallback to inline levels if fetch fails (offline/APK)
