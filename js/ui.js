@@ -858,6 +858,7 @@ const UI = {
   _renderBotProfiles() {
     var Social = window._SS.Social;
     var Storage = window._SS.Storage;
+    var isAdmin = Storage.isAdminMode ? Storage.isAdminMode() : false;
     var pending = Social.getPendingGifts();
     var pendingMap = {};
     for (var i = 0; i < pending.length; i++) pendingMap[pending[i].botId] = true;
@@ -865,13 +866,17 @@ const UI = {
     var data = Social._getSocialData();
     var today = new Date().toDateString();
     var sentSoFar = (data.sendDate === today) ? (data.sentCount || 0) : 0;
-    var remainingSends = Social.MAX_SEND_PER_DAY - sentSoFar;
+    var remainingSends = isAdmin ? 999 : Social.MAX_SEND_PER_DAY - sentSoFar;
     var playerCoins = Storage.getCoins ? Storage.getCoins() : 0;
-    var canSend = remainingSends > 0 && playerCoins >= Social.SEND_GIFT_COST;
+    var canSend = isAdmin || (remainingSends > 0 && playerCoins >= Social.SEND_GIFT_COST);
 
     var container = document.getElementById('bot-list');
     if (!container) return;
     var html = '';
+    // Friendship hint
+    html += '<div class="friendship-hint">';
+    html += '💡 <b>Higher friendship = bigger gifts!</b> Interact with bots to level up and unlock more coins & boosters.';
+    html += '</div>';
     for (var i = 0; i < Social.BOTS.length; i++) {
       var bot = Social.BOTS[i];
       var hasGift = !!pendingMap[bot.id];
@@ -909,7 +914,9 @@ const UI = {
       }
       // All 3 bot send buttons are enabled as long as player has remaining sends + coins
       html += '<button class="btn-send-gift" data-bot="' + bot.id + '"' + (!canSend ? ' disabled' : '') + '>';
-      if (remainingSends <= 0) {
+      if (isAdmin) {
+        html += '🎁 Send Gift (ADMIN ♾️)';
+      } else if (remainingSends <= 0) {
         html += '🎁 Max Today';
       } else if (playerCoins < Social.SEND_GIFT_COST) {
         html += '🎁 Need ' + Social.SEND_GIFT_COST + ' 🪙';

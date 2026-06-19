@@ -738,7 +738,8 @@ html, body {
 }
 
 .shop-tab {
-  padding: 10px 6px;
+  padding: 10px 8px;
+  min-width: 100px;
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.03);
@@ -753,8 +754,8 @@ html, body {
   align-items: center;
   gap: 2px;
 }
-.shop-tab .shop-tab-icon { font-size: 20px; line-height: 1; }
-.shop-tab .shop-tab-lbl { font-size: 10px; line-height: 1; }
+.shop-tab .shop-tab-icon { font-size: 22px; line-height: 1; }
+.shop-tab .shop-tab-lbl { font-size: 11px; line-height: 1; }
 .shop-tab.active {
   border-color: var(--gold-solid);
   background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1));
@@ -1027,7 +1028,8 @@ html, body {
 
 .social-tab {
   flex: 1;
-  padding: 8px 0;
+  min-width: 100px;
+  padding: 10px 4px;
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.03);
@@ -1043,11 +1045,11 @@ html, body {
   gap: 2px;
 }
 .social-tab .social-tab-icon {
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
 }
 .social-tab .social-tab-label {
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -1147,6 +1149,10 @@ html, body {
 
 .feed-item--bot {
   background: rgba(112,161,255,0.04);
+}
+
+.feed-item--claimed {
+  border-left: 3px solid rgba(46,213,115,0.5);
 }
 
 .feed-avatar { font-size: 24px; flex-shrink: 0; line-height: 1; }
@@ -1313,6 +1319,19 @@ html, body {
   color: var(--text-dim);
   min-width: 24px;
   text-align: right;
+}
+
+/* Friendship Hint */
+.friendship-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(112,161,255,0.1), rgba(167,139,250,0.06));
+  border: 1px solid rgba(112,161,255,0.15);
+  line-height: 1.5;
+  text-align: center;
 }
 
 .bot-gift-badge {

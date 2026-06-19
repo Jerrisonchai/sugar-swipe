@@ -220,6 +220,7 @@ const Storage = {
       coins: this.getCoins(),
       goldbars: this.getGoldBars(),
       boosters: JSON.parse(JSON.stringify(this._getBoosters())),
+      social_friendship: JSON.parse(JSON.stringify((this.get('social') || {}).friendship || {})),
     });
   },
 
@@ -233,6 +234,12 @@ const Storage = {
     this.set('coins', save.coins || 0);
     this.set('goldbars', save.goldbars || 0);
     this.set('boosters', save.boosters || { moves: 2, hammer: 3, bomb: 1 });
+    // Restore friendship levels
+    if (save.social_friendship) {
+      var social = this.get('social') || {};
+      social.friendship = save.social_friendship;
+      this.set('social', social);
+    }
     this.remove('admin_save');
   },
 

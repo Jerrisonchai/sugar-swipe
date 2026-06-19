@@ -64,6 +64,55 @@ const Social = {
     this._St().set('social', data);
   },
 
+  /* Gift scaling by friendship level */
+  GIFT_CURVE: [
+    { level: 1, maxBoosters: 1, coinRange: [50, 100], types: ['life', 'coins'] },
+    { level: 3, maxBoosters: 1, coinRange: [100, 200], types: ['life', 'coins', 'booster_hammer'] },
+    { level: 6, maxBoosters: 2, coinRange: [200, 400], types: ['life', 'coins', 'booster_hammer', 'booster_moves'] },
+    { level: 11, maxBoosters: 3, coinRange: [400, 600], types: ['life', 'coins', 'booster_hammer', 'booster_moves', 'booster_bomb'] },
+    { level: 16, maxBoosters: 4, coinRange: [600, 1000], types: ['life', 'coins', 'booster_hammer', 'booster_moves', 'booster_bomb'] },
+  ],
+
+  /** Get the gift curve tier for a friendship level */
+  _getGiftTier(friendshipLevel) {
+    var tier = this.GIFT_CURVE[0];
+    for (var i = 0; i < this.GIFT_CURVE.length; i++) {
+      if (friendshipLevel >= this.GIFT_CURVE[i].level) tier = this.GIFT_CURVE[i];
+    }
+    return tier;
+  },
+
+  /** Generate a scaled gift for a bot */
+  _generateGiftForBot(botId) {
+    var lvl = this.getFriendshipLevel(botId);
+    var tier = this._getGiftTier(lvl);
+    var types = tier.types.slice(); // clone
+    // shuffle types
+    for (var i = types.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = types[i]; types[i] = types[j]; types[j] = tmp;
+    }
+    var type = types[0];
+    var gv = this.GIFT_VALUES[type];
+    if (!gv) return { type: type, date: '', time: Date.now() };
+
+    var gift = { type: type, date: '', time: Date.now() };
+    if (type === 'coins') {
+      var cr = tier.coinRange;
+      gift.coins = cr[0] + Math.floor(Math.random() * (cr[1] - cr[0] + 1));
+    } else if (type === 'booster_hammer') {
+      var nb = Math.min(tier.maxBoosters, 1 + Math.floor(Math.random() * 3));
+      gift.amount = nb; gift.label = nb + 'x Hammer';
+    } else if (type === 'booster_moves') {
+      var nm = Math.min(tier.maxBoosters, 1 + Math.floor(Math.random() * 3));
+      gift.amount = nm; gift.label = nm + 'x +3 Moves';
+    } else if (type === 'booster_bomb') {
+      var nc = Math.min(tier.maxBoosters, 1 + Math.floor(Math.random() * 3));
+      gift.amount = nc; gift.label = nc + 'x Bomb';
+    }
+    return gift;
+  },
+
   /* ---- Friendship ---- */
   /** Add 1 friendship point to a bot (called on send/receive gift) */
   addFriendship(botId) {
@@ -187,11 +236,14 @@ const Social = {
       }
       if (Math.random() < bot.giftChance) {
         if (!gifts[bot.id]) gifts[bot.id] = [];
-        var types = bot.giftTypes;
-        var type = types[Math.floor(Math.random() * types.length)];
-        gifts[bot.id].push({ type: type, date: today, time: Date.now() });
+        var gift = this._generateGiftForBot(bot.id);
+        gift.date = today;
+        gifts[bot.id].push(gift);
+        var desc = this.GIFT_VALUES[gift.type] ? this.GIFT_VALUES[gift.type].label : gift.type;
+        if (gift.label) desc = gift.label;
+        var lvl = this.getFriendshipLevel(bot.id);
         this._addActivity(bot.id, bot.name, bot.emoji,
-          'sent you a gift: ' + (this.GIFT_VALUES[type] ? this.GIFT_VALUES[type].label : type) + '! 🎁');
+          'sent you a gift: ' + desc + '! 🎁 (Lv.' + lvl + ' bonus)');
       }
     }
     data.gifts = gifts;
@@ -230,6 +282,16 @@ const Social = {
     }
 
     this.addFriendship(botId);
+    // Log to activity feed
+    var desc = gv ? gv.label : gift.type;
+    if (gift.label) desc = gift.label;
+    for (var k = 0; k < this.BOTS.length; k++) {
+      if (this.BOTS[k].id === botId) {
+        this._addActivity(botId, this.BOTS[k].name, this.BOTS[k].emoji,
+          'sent you a gift: ' + desc + ' — you claimed it! 🎁');
+        break;
+      }
+    }
     return { botId: botId, type: gift.type, value: gv };
   },
 
@@ -238,10 +300,11 @@ const Social = {
     var data = this._getSocialData();
     var today = new Date().toDateString();
     if (data.sendDate !== today) { data.sentCount = 0; data.sendDate = today; }
-    if (data.sentCount >= this.MAX_SEND_PER_DAY) {
+    var isAdmin = this._St().isAdminMode ? this._St().isAdminMode() : false;
+    if (!isAdmin && data.sentCount >= this.MAX_SEND_PER_DAY) {
       return { success: false, reason: 'Max ' + this.MAX_SEND_PER_DAY + ' gifts per day' };
     }
-    if (!this._St().spendCoins(this.SEND_GIFT_COST)) {
+    if (!isAdmin && !this._St().spendCoins(this.SEND_GIFT_COST)) {
       return { success: false, reason: 'Not enough coins (need ' + this.SEND_GIFT_COST + ')' };
     }
     data.sentCount++;
@@ -251,9 +314,18 @@ const Social = {
     for (var i = 0; i < this.BOTS.length; i++) {
       if (this.BOTS[i].id === botId) { bot = this.BOTS[i]; break; }
     }
-    // Bot might send a return gift (30% chance)
+    // Bot return gift (30% chance, scaled by friendship)
     var returned = Math.random() < 0.3;
-    if (returned) this._maybeGenerateGifts();
+    if (returned) {
+      var data2 = this._getSocialData();
+      var gifts2 = data2.gifts || {};
+      if (!gifts2[botId]) gifts2[botId] = [];
+      var returnGift = this._generateGiftForBot(botId);
+      returnGift.date = new Date().toDateString();
+      gifts2[botId].push(returnGift);
+      data2.gifts = gifts2;
+      this._saveSocialData(data2);
+    }
     this._addActivity('player', 'You', '👤', 'sent ' + (bot ? bot.name : 'friend') + ' a gift! ❤️');
     this.addFriendship(botId);
     return { success: true, sentCount: data.sentCount, maxPerDay: this.MAX_SEND_PER_DAY, botReplied: returned };
