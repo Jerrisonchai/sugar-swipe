@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a0a2e">
+<title>Sugar Swipe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/candy-designs.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== GAME SCREEN ===== -->
+  <div id="game-screen" class="screen active">
+    <div id="hud" class="hud-bar">
+      <div class="hud-item">
+        <span class="hud-label">Level</span>
+        <span id="hud-level" class="hud-value">1</span>
+      </div>
+      <div class="hud-item hud-score">
+        <span class="hud-label">Score</span>
+        <span id="hud-score" class="hud-value">0</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Target</span>
+        <span id="hud-target" class="hud-value">1000</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Moves</span>
+        <span id="hud-moves" class="hud-value">25</span>
+      </div>
+    </div>
+
+    <div id="board-wrapper">
+      <div id="board-container">
+        <div id="board"></div>
+        <canvas id="particles"></canvas>
+        <div id="combo-popup"></div>
+      </div>
+    </div>
+
+    <div class="booster-tray">
+      <button class="btn--booster disabled" disabled title="+3 Moves">
+        <span class="booster-icon">+3</span>
+        <span class="booster-label">Moves</span>
+      </button>
+      <button class="btn--booster disabled" disabled title="Lollipop Hammer">
+        <span class="booster-icon">🔨</span>
+        <span class="booster-label">Hammer</span>
+      </button>
+      <button class="btn--booster disabled" disabled title="Color Bomb">
+        <span class="booster-icon">💣</span>
+        <span class="booster-label">Bomb</span>
+      </button>
+      <button id="btn-pause" class="btn--booster" title="Pause">
+        <span class="booster-icon">⏸</span>
+        <span class="booster-label">Pause</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== LEVEL COMPLETE SCREEN ===== -->
+  <div id="level-complete" class="screen overlay">
+    <div class="glass-panel result-panel">
+      <h2 class="result-title">Level Complete!</h2>
+      <div id="stars-container" class="stars-row">
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+      </div>
+      <div id="result-score" class="result-score">Score: 0</div>
+      <div class="result-buttons">
+        <button id="btn-next-level" class="btn btn--primary">Next Level</button>
+        <button id="btn-replay-win" class="btn btn--secondary">Replay</button>
+        <button id="btn-map-win" class="btn btn--secondary">World Map</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LEVEL FAIL SCREEN ===== -->
+  <div id="level-fail" class="screen overlay">
+    <div class="glass-panel result-panel">
+      <h2 class="result-title">Out of Moves!</h2>
+      <p class="result-sub">You were so close!</p>
+      <div id="fail-score" class="result-score">Score: 0</div>
+      <div class="result-buttons">
+        <button id="btn-retry" class="btn btn--primary">Try Again</button>
+        <button id="btn-extra-moves" class="btn btn--secondary disabled" disabled>+5 Moves (10 🪙)</button>
+        <button id="btn-map-fail" class="btn btn--secondary">World Map</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAUSE OVERLAY ===== -->
+  <div id="pause-screen" class="screen overlay">
+    <div class="glass-panel pause-panel">
+      <h2 class="result-title">Paused</h2>
+      <div class="result-buttons">
+        <button id="btn-resume" class="btn btn--primary">Resume</button>
+        <button id="btn-restart" class="btn btn--secondary">Restart</button>
+        <button id="btn-quit" class="btn btn--secondary">Quit</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/scoring.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/board.js"></script>
+<script src="js/match-engine.js"></script>
+<script src="js/cascade.js"></script>
+<script src="js/input.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
