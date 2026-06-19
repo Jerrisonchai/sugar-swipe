@@ -10,9 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/main.css?v=11">
-<link rel="stylesheet" href="css/animations.css?v=11">
-<link rel="stylesheet" href="css/candy-designs.css?v=11">
+<link rel="stylesheet" href="css/main.css?v=12">
+<link rel="stylesheet" href="css/animations.css?v=12">
+<link rel="stylesheet" href="css/candy-designs.css?v=12">
 </head>
 <body>
 
@@ -24,6 +24,8 @@
       <h1 class="map-title">🍬 Sugar Swipe</h1>
       <p class="map-sub"> ❤️ <span id="map-lives">5</span> &nbsp;|&nbsp; 🪙 <span id="map-coins">0</span> &nbsp;|&nbsp; 💰 <span id="map-goldbars">0</span></p>
       <button id="btn-open-shop" class="btn--shop-entry">🛒 Shop</button>
+      &nbsp;
+      <button id="btn-open-social" class="btn--social-entry">👥 Friends</button>
     </div>
     <div id="world-list" class="world-list"></div>
   </div>
@@ -163,6 +165,42 @@
     </div>
   </div>
 
+  <!-- ===== SOCIAL SCREEN ===== -->
+  <div id="social-screen" class="screen">
+    <div class="social-header">
+      <h1 class="social-title">👥 Friends</h1>
+      <div id="gift-banner" class="gift-banner hidden"></div>
+    </div>
+
+    <!-- Friend Feed -->
+    <div class="social-section">
+      <h3 class="social-section-title">📰 Activity Feed</h3>
+      <div id="friend-feed" class="friend-feed"></div>
+    </div>
+
+    <!-- AI Bot Cards -->
+    <div class="social-section">
+      <h3 class="social-section-title">🤖 AI Friends</h3>
+      <div id="bot-list" class="bot-list"></div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="social-section">
+      <h3 class="social-section-title">🏆 Leaderboard</h3>
+      <div class="lb-tabs">
+        <button class="lb-tab active" data-period="weekly">Weekly</button>
+        <button class="lb-tab" data-period="allTime">All Time</button>
+      </div>
+      <div id="leaderboard-list" class="leaderboard-list"></div>
+    </div>
+
+    <div class="back-btn-wrapper">
+      <button id="btn-back-social" class="btn--back" aria-label="Back">
+        <svg viewBox="0 0 24 24"><polyline points="15,4 7,12 15,20"/></svg>
+      </button>
+    </div>
+  </div>
+
   <!-- ===== SHOP SCREEN ===== -->
   <div id="shop-screen" class="screen">
     <div class="shop-header">
@@ -214,18 +252,19 @@
 
 </div>
 
-<script src="js/storage.js?v=11"></script>
-<script src="js/scoring.js?v=11"></script>
-<script src="js/levels.js?v=11"></script>
-<script src="js/board.js?v=11"></script>
-<script src="js/match-engine.js?v=11"></script>
-<script src="js/special.js?v=11"></script>
-<script src="js/obstacles.js?v=11"></script>
-<script src="js/audio.js?v=11"></script>
-<script src="js/cascade.js?v=11"></script>
-<script src="js/input.js?v=11"></script>
-<script src="js/ui.js?v=11"></script>
-<script src="js/shop.js?v=11"></script>
-<script src="js/main.js?v=11"></script>
+<script src="js/storage.js?v=12"></script>
+<script src="js/scoring.js?v=12"></script>
+<script src="js/levels.js?v=12"></script>
+<script src="js/board.js?v=12"></script>
+<script src="js/match-engine.js?v=12"></script>
+<script src="js/special.js?v=12"></script>
+<script src="js/obstacles.js?v=12"></script>
+<script src="js/audio.js?v=12"></script>
+<script src="js/cascade.js?v=12"></script>
+<script src="js/input.js?v=12"></script>
+<script src="js/ui.js?v=12"></script>
+<script src="js/shop.js?v=12"></script>
+<script src="js/social.js?v=12"></script>
+<script src="js/main.js?v=12"></script>
 </body>
 </html>

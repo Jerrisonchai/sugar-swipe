@@ -741,6 +741,171 @@ const UI = {
     };
   },
 
+
+  /* ===== SOCIAL RENDERING ===== */
+
+  showSocial() {
+    this.showScreen('social-screen');
+    var Social = window._SS.Social;
+    Social.checkWeeklyReset();
+    this._renderGiftBanner();
+    this._renderFeed();
+    this._renderBots();
+    this._renderLeaderboard('weekly');
+    this._bindSocialTabs();
+  },
+
+  _renderGiftBanner() {
+    var Social = window._SS.Social;
+    var pending = Social.getPendingGifts();
+    var banner = document.getElementById('gift-banner');
+    if (!banner) return;
+    if (pending.length === 0) {
+      banner.classList.add('hidden');
+      return;
+    }
+    banner.classList.remove('hidden');
+    var html = '';
+    for (var i = 0; i < pending.length; i++) {
+      var p = pending[i];
+      var gv = Social.GIFT_VALUES[p.gift.type];
+      html += '<div class="gift-alert" data-bot="' + p.botId + '">';
+      html += '<span class="gift-alert-icon">' + p.bot.emoji + '</span>';
+      html += '<span class="gift-alert-text">' + p.bot.name + ' sent you ' + (gv ? gv.label : 'a gift') + '!</span>';
+      html += '<button class="gift-accept-btn" data-bot="' + p.botId + '">Claim</button>';
+      html += '</div>';
+    }
+    banner.innerHTML = html;
+
+    var self = this;
+    banner.querySelectorAll('.gift-accept-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var botId = btn.dataset.bot;
+        var result = Social.acceptGift(botId);
+        if (result && result.value) {
+          if (window._SS.AudioFX) window._SS.AudioFX.buttonTap();
+        }
+        self._renderGiftBanner();
+        self._renderBots();
+      });
+    });
+  },
+
+  _renderFeed() {
+    var Social = window._SS.Social;
+    var feed = Social.getFeed(10);
+    var container = document.getElementById('friend-feed');
+    if (!container) return;
+    if (feed.length === 0) {
+      container.innerHTML = '<div class="feed-empty">No activity yet. Complete some levels!</div>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < feed.length; i++) {
+      var item = feed[i];
+      var timeStr = this._formatTimeAgo(item.time);
+      html += '<div class="feed-item">';
+      html += '<span class="feed-avatar">' + item.emoji + '</span>';
+      html += '<div class="feed-body">';
+      html += '<span class="feed-name">' + item.name + '</span> ';
+      html += '<span class="feed-text">' + item.text + '</span>';
+      html += '<span class="feed-time">' + timeStr + '</span>';
+      html += '</div>';
+      html += '</div>';
+    }
+    container.innerHTML = html;
+  },
+
+  _renderBots() {
+    var Social = window._SS.Social;
+    var pending = Social.getPendingGifts();
+    var pendingMap = {};
+    for (var i = 0; i < pending.length; i++) pendingMap[pending[i].botId] = true;
+
+    var data = Social._getSocialData();
+    var today = new Date().toDateString();
+    var canSend = data.sendDate !== today || (data.sentCount || 0) < Social.MAX_SEND_PER_DAY;
+
+    var container = document.getElementById('bot-list');
+    if (!container) return;
+    var html = '';
+    for (var i = 0; i < Social.BOTS.length; i++) {
+      var bot = Social.BOTS[i];
+      var botData = Social.getBotScore(bot.id);
+      var hasGift = !!pendingMap[bot.id];
+      html += '<div class="bot-card' + (hasGift ? ' bot-card--gift' : '') + '">';
+      html += '<div class="bot-avatar">' + bot.emoji + '</div>';
+      html += '<div class="bot-info">';
+      html += '<div class="bot-name">' + bot.name + ' <span class="bot-title">' + bot.title + '</span></div>';
+      html += '<div class="bot-personality">' + bot.personality + '</div>';
+      html += '<div class="bot-stats">⭐ ' + (botData.allTimeStars || 0).toLocaleString() + ' total stars</div>';
+      html += '</div>';
+      if (hasGift) {
+        html += '<div class="bot-gift-badge">🎁</div>';
+      }
+      html += '<button class="btn-send-gift" data-bot="' + bot.id + '"' + (!canSend ? ' disabled' : '') + '>' + (canSend ? '🎁 Send Gift' : 'Max Today') + '</button>';
+      html += '</div>';
+    }
+    container.innerHTML = html;
+
+    var self = this;
+    container.querySelectorAll('.btn-send-gift:not([disabled])').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (window._SS.AudioFX) window._SS.AudioFX.buttonTap();
+        var botId = btn.dataset.bot;
+        var result = Social.sendGiftToBot(botId);
+        if (result.success) {
+          self._renderBots();
+          self._renderFeed();
+        }
+      });
+    });
+  },
+
+  _renderLeaderboard(period) {
+    var Social = window._SS.Social;
+    var entries = Social.getLeaderboard(period);
+    var container = document.getElementById('leaderboard-list');
+    if (!container) return;
+    var html = '';
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      var rankIcon = e.rank === 1 ? '🥇' : e.rank === 2 ? '🥈' : e.rank === 3 ? '🥉' : '#' + e.rank;
+      html += '<div class="lb-entry' + (e.isPlayer ? ' lb-entry--player' : '') + '">';
+      html += '<span class="lb-rank">' + rankIcon + '</span>';
+      html += '<span class="lb-avatar">' + e.emoji + '</span>';
+      html += '<div class="lb-info">';
+      html += '<span class="lb-name">' + e.name + '</span>';
+      html += '<span class="lb-stars">⭐ ' + e.stars.toLocaleString() + ' stars</span>';
+      html += '</div>';
+      html += '<span class="lb-score">' + e.score.toLocaleString() + ' pts</span>';
+      html += '</div>';
+    }
+    container.innerHTML = html;
+  },
+
+  _bindSocialTabs() {
+    var self = this;
+    document.querySelectorAll('.lb-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.lb-tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        self._renderLeaderboard(tab.dataset.period);
+      });
+    });
+  },
+
+  _formatTimeAgo(timestamp) {
+    var diff = Date.now() - timestamp;
+    var mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return mins + 'm ago';
+    var hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + 'h ago';
+    return Math.floor(hours / 24) + 'd ago';
+  },
+
 };
 
 window._SS.UI = UI;

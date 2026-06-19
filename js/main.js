@@ -452,6 +452,9 @@ window._SS = window._SS || {};
       // Award coins: 50 per star
       Storage.addCoins(stars * 50);
 
+      // Update social (bot scores, feed)
+      if (window._SS.Social) window._SS.Social.onPlayerLevelComplete(state.score, stars, state.level.id);
+
       const worldLevels = Levels.getAll().filter(l => l.world === state.level.world);
       const allComplete = worldLevels.every(l => Storage.getLevelStars(l.id) > 0);
       if (allComplete && state.level.world < 6) {
@@ -584,6 +587,17 @@ window._SS = window._SS || {};
     });
 
     document.getElementById('btn-back-shop')?.addEventListener('click', () => {
+      AudioFX.buttonTap();
+      UI.showWorldMap();
+    });
+
+    // ---- Social navigation ----
+    document.getElementById('btn-open-social')?.addEventListener('click', () => {
+      AudioFX.buttonTap();
+      UI.showSocial();
+    });
+
+    document.getElementById('btn-back-social')?.addEventListener('click', () => {
       AudioFX.buttonTap();
       UI.showWorldMap();
     });

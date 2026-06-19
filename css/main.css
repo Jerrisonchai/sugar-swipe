@@ -921,3 +921,303 @@ html, body {
   60% { transform: scale(1.3); }
   100% { transform: scale(1); }
 }
+
+/* ===== PHASE 8: SOCIAL ===== */
+
+/* Social entry button */
+.btn--social-entry {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 8px 24px;
+  border-radius: 20px;
+  border: 2px solid #70a1ff;
+  background: linear-gradient(135deg, rgba(112,161,255,0.15), rgba(30,144,255,0.08));
+  color: #70a1ff;
+  font-family: var(--font-heading);
+  font-size: clamp(14px, 3.5vw, 16px);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn--social-entry:active {
+  transform: scale(0.95);
+  background: rgba(112,161,255,0.2);
+}
+
+/* Social screen */
+#social-screen {
+  background: linear-gradient(180deg, #0a0a1a 0%, #1a0a2e 100%);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.social-header {
+  padding: 24px 16px 8px;
+  text-align: center;
+}
+
+.social-title {
+  font-family: var(--font-heading);
+  font-size: clamp(24px, 6vw, 32px);
+  color: #70a1ff;
+  text-shadow: 0 0 20px rgba(112,161,255,0.2);
+}
+
+.social-section {
+  padding: 8px 12px;
+}
+
+.social-section-title {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+/* Gift Banner */
+.gift-banner {
+  margin: 8px 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gift-banner.hidden { display: none; }
+
+.gift-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,165,0,0.08));
+  border: 1px solid rgba(255,215,0,0.25);
+  animation: giftPulse 2s ease-in-out infinite;
+}
+@keyframes giftPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0.2); }
+  50% { box-shadow: 0 0 16px 4px rgba(255,215,0,0.12); }
+}
+
+.gift-alert-icon { font-size: 24px; flex-shrink: 0; }
+.gift-alert-text { flex: 1; font-size: 13px; color: var(--text-primary); }
+.gift-accept-btn {
+  flex-shrink: 0;
+  padding: 6px 16px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  color: #1a0a2e;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Friend Feed */
+.friend-feed {
+  max-height: 180px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.feed-empty {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13px;
+  padding: 20px 0;
+}
+
+.feed-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+}
+
+.feed-avatar { font-size: 24px; flex-shrink: 0; line-height: 1; }
+
+.feed-body { flex: 1; min-width: 0; }
+
+.feed-name {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.feed-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.feed-time {
+  display: block;
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* Bot Cards */
+.bot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bot-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.bot-card--gift {
+  border-color: rgba(255,215,0,0.3);
+  background: linear-gradient(145deg, rgba(255,215,0,0.08), rgba(255,165,0,0.03));
+}
+
+.bot-avatar { font-size: 36px; flex-shrink: 0; }
+
+.bot-info { flex: 1; min-width: 0; }
+
+.bot-name {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.bot-title {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.bot-personality {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.bot-stats {
+  font-size: 11px;
+  color: var(--gold-solid);
+  margin-top: 2px;
+}
+
+.bot-gift-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 20px;
+  animation: giftBounce 0.6s ease-in-out infinite alternate;
+}
+@keyframes giftBounce {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.3); }
+}
+
+.btn-send-gift {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,215,0,0.3);
+  background: rgba(255,215,0,0.1);
+  color: var(--gold-solid);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-send-gift:active { background: rgba(255,215,0,0.2); }
+.btn-send-gift:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Leaderboard */
+.lb-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.lb-tab {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-secondary);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+.lb-tab.active {
+  border-color: var(--gold-solid);
+  background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1));
+  color: var(--gold-solid);
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 80px;
+}
+
+.lb-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.lb-entry--player {
+  background: linear-gradient(145deg, rgba(112,161,255,0.12), rgba(112,161,255,0.04));
+  border-color: rgba(112,161,255,0.25);
+}
+
+.lb-rank {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.lb-avatar { font-size: 24px; flex-shrink: 0; }
+
+.lb-info { flex: 1; min-width: 0; }
+
+.lb-name {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.lb-stars {
+  font-size: 11px;
+  color: var(--gold-solid);
+}
+
+.lb-score {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
