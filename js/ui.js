@@ -889,6 +889,17 @@ const UI = {
       html += '</div>';
       if (hasGift) html += '<div class="bot-gift-badge">🎁</div>';
       html += '</div>';
+      // Friendship level
+      var fp = Social.getFriendshipPoints(bot.id);
+      var lvl = Social.getFriendshipLevel(bot.id);
+      var ptsInLvl = fp % 5;
+      var pct = Math.round((ptsInLvl / 5) * 100);
+      var tierEmoji = lvl <= 5 ? '🤝' : lvl <= 10 ? '💛' : lvl <= 20 ? '🌟' : '💫';
+      html += '<div class="friendship-bar">';
+      html += '<span class="friendship-tier">' + tierEmoji + ' Lv.' + lvl + '</span>';
+      html += '<div class="friendship-track"><div class="friendship-fill" style="width:' + pct + '%"></div></div>';
+      html += '<span class="friendship-pts">' + ptsInLvl + '/5</span>';
+      html += '</div>';
       // Story
       html += '<p class="bot-story">' + bot.story + '</p>';
       // Actions

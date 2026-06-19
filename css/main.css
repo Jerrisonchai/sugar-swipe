@@ -1280,6 +1280,41 @@ html, body {
 .btn-send-gift:active { background: rgba(255,215,0,0.2); }
 .btn-send-gift:disabled { opacity: 0.35; cursor: not-allowed; }
 
+/* Friendship Level Bar */
+.friendship-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  margin-bottom: 4px;
+}
+.friendship-tier {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  min-width: 70px;
+}
+.friendship-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+.friendship-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #70a1ff, #a78bfa);
+  transition: width 0.4s ease;
+}
+.friendship-pts {
+  font-size: 10px;
+  color: var(--text-dim);
+  min-width: 24px;
+  text-align: right;
+}
+
 .bot-gift-badge {
   position: absolute;
   top: 10px;

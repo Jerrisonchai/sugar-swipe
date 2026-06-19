@@ -57,11 +57,34 @@ const Social = {
   _St() { return window._SS.Storage; },
 
   _getSocialData() {
-    return this._St().get('social') || { gifts: {}, sentCount: 0, sendDate: '', activity: [], leaderboard: {} };
+    return this._St().get('social') || { gifts: {}, sentCount: 0, sendDate: '', activity: [], leaderboard: {}, friendship: {} };
   },
 
   _saveSocialData(data) {
     this._St().set('social', data);
+  },
+
+  /* ---- Friendship ---- */
+  /** Add 1 friendship point to a bot (called on send/receive gift) */
+  addFriendship(botId) {
+    var data = this._getSocialData();
+    if (!data.friendship) data.friendship = {};
+    if (!data.friendship[botId]) data.friendship[botId] = 0;
+    data.friendship[botId]++;
+    this._saveSocialData(data);
+    return data.friendship[botId];
+  },
+
+  /** Get friendship points for a bot (returns 0 for unknown) */
+  getFriendshipPoints(botId) {
+    var data = this._getSocialData();
+    if (!data.friendship) return 0;
+    return data.friendship[botId] || 0;
+  },
+
+  /** Friendship level (1 point per interaction, 5 pts per level) */
+  getFriendshipLevel(botId) {
+    return Math.floor(this.getFriendshipPoints(botId) / 5) + 1;
   },
 
   /* ---- Bot Score ---- */
@@ -206,6 +229,7 @@ const Social = {
         break;
     }
 
+    this.addFriendship(botId);
     return { botId: botId, type: gift.type, value: gv };
   },
 
@@ -231,6 +255,7 @@ const Social = {
     var returned = Math.random() < 0.3;
     if (returned) this._maybeGenerateGifts();
     this._addActivity('player', 'You', '👤', 'sent ' + (bot ? bot.name : 'friend') + ' a gift! ❤️');
+    this.addFriendship(botId);
     return { success: true, sentCount: data.sentCount, maxPerDay: this.MAX_SEND_PER_DAY, botReplied: returned };
   },
 
