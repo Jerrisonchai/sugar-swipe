@@ -577,6 +577,25 @@ window._SS = window._SS || {};
       gotoWorldMap();
     });
 
+    // ---- Shop navigation ----
+    document.getElementById('btn-open-shop')?.addEventListener('click', () => {
+      AudioFX.buttonTap();
+      UI.showShop();
+    });
+
+    document.getElementById('btn-back-shop')?.addEventListener('click', () => {
+      AudioFX.buttonTap();
+      UI.showWorldMap();
+    });
+
+    // ---- Shop tabs ----
+    document.querySelectorAll('.shop-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        AudioFX.buttonTap();
+        UI._renderShopTab(tab.dataset.tab);
+      });
+    });
+
     // ---- Booster buttons ----
     const btnMoves = document.getElementById('booster-moves');
     const btnHammer = document.getElementById('booster-hammer');
@@ -639,6 +658,7 @@ window._SS = window._SS || {};
         Storage.set('progress', adminProgress);
         Storage.setUnlockedWorld(6);
         Storage.set('coins', 9999);
+        Storage.set('goldbars', 9999);
         Storage.set('boosters', { moves: 99, hammer: 99, bomb: 99 });
         Storage.set('lives', { lives: 5, lastRegenTime: Date.now() + 365*24*3600000 });
         btn.classList.add('active');

@@ -132,6 +132,25 @@ const Storage = {
     return coins;
   },
 
+  /* ===== GOLD BARS (premium) ===== */
+  getGoldBars() {
+    return this.get('goldbars') || 0;
+  },
+
+  addGoldBars(amount) {
+    var gb = this.getGoldBars() + amount;
+    this.set('goldbars', gb);
+    return gb;
+  },
+
+  spendGoldBars(amount) {
+    var gb = this.getGoldBars();
+    if (gb < amount) return false;
+    gb -= amount;
+    this.set('goldbars', gb);
+    return gb;
+  },
+
   /* ===== BOOSTERS ===== */
   _getBoosters() {
     return this.get('boosters') || { moves: 2, hammer: 3, bomb: 1 };
@@ -163,6 +182,7 @@ const Storage = {
       unlocked_world: this.getUnlockedWorld(),
       lives: JSON.parse(JSON.stringify(this._getLivesData())),
       coins: this.getCoins(),
+      goldbars: this.getGoldBars(),
       boosters: JSON.parse(JSON.stringify(this._getBoosters())),
     });
   },
@@ -175,6 +195,7 @@ const Storage = {
     this.set('unlocked_world', save.unlocked_world || 1);
     this.set('lives', save.lives || { lives: this.MAX_LIVES, lastRegenTime: Date.now() });
     this.set('coins', save.coins || 0);
+    this.set('goldbars', save.goldbars || 0);
     this.set('boosters', save.boosters || { moves: 2, hammer: 3, bomb: 1 });
     this.remove('admin_save');
   },

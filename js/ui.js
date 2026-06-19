@@ -401,6 +401,7 @@ const UI = {
     var Storage = window._SS.Storage;
     document.getElementById('map-lives') && (document.getElementById('map-lives').textContent = Storage.getLives());
     document.getElementById('map-coins') && (document.getElementById('map-coins').textContent = Storage.getCoins());
+    document.getElementById('map-goldbars') && (document.getElementById('map-goldbars').textContent = Storage.getGoldBars());
     var container = document.getElementById('world-list');
     if (!container) return;
     var worlds = this.WORLD_DATA;
@@ -467,6 +468,279 @@ const UI = {
     });
     document.getElementById('btn-back-worlds').onclick = function() { self.showWorldMap(); };
   },
+
+  /* ===== SHOP RENDERING ===== */
+
+  _currentShopTab: 'gold',
+
+  showShop() {
+    this.showScreen('shop-screen');
+    this._updateShopBalance();
+    this._renderShopTab('gold');
+  },
+
+  _updateShopBalance() {
+    var Storage = window._SS.Storage;
+    document.getElementById('shop-goldbars') && (document.getElementById('shop-goldbars').textContent = Storage.getGoldBars());
+    document.getElementById('shop-coins') && (document.getElementById('shop-coins').textContent = Storage.getCoins());
+  },
+
+  _renderShopTab(tab) {
+    this._currentShopTab = tab;
+    var container = document.getElementById('shop-content');
+    if (!container) return;
+    var self = this;
+
+    // Update active tab
+    document.querySelectorAll('.shop-tab').forEach(function(t) {
+      t.classList.toggle('active', t.dataset.tab === tab);
+    });
+
+    var html = '';
+    switch (tab) {
+      case 'gold':
+        html = self._renderGoldPacks();
+        break;
+      case 'coins':
+        html = self._renderCoinPacks();
+        break;
+      case 'boosters':
+        html = self._renderBoosterPacks();
+        break;
+      case 'bundles':
+        html = self._renderBundles();
+        break;
+      case 'inventory':
+        html = self._renderInventory();
+        break;
+    }
+    container.innerHTML = html;
+    self._bindShopClicks(tab);
+  },
+
+  _renderGoldPacks() {
+    var Shop = window._SS.Shop;
+    var html = '<div class="shop-subtitle">Buy Gold Bars with Real Money</div>';
+    html += '<div class="shop-grid">';
+    for (var i = 0; i < Shop.GOLD_PACKS.length; i++) {
+      var p = Shop.GOLD_PACKS[i];
+      var tagHtml = p.tag ? '<span class="shop-tag">' + p.tag + '</span>' : '';
+      var bonusHtml = p.bonus > 0 ? '<span class="shop-bonus">+' + p.bonus + ' Bonus!</span>' : '';
+      html += '<div class="shop-card' + (p.tag === 'Best Value' ? ' shop-card--featured' : '') + '" data-pack="' + p.id + '">';
+      html += tagHtml;
+      html += '<div class="shop-card-icon">💰</div>';
+      html += '<div class="shop-card-name">' + p.name + '</div>';
+      html += '<div class="shop-card-amount">' + p.amount + ' <small>Gold</small></div>';
+      if (bonusHtml) html += bonusHtml;
+      html += '<div class="shop-card-price">' + p.price + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  },
+
+  _renderCoinPacks() {
+    var Shop = window._SS.Shop;
+    var Storage = window._SS.Storage;
+    var gb = Storage.getGoldBars();
+    var html = '<div class="shop-subtitle">Exchange Gold Bars for Coins</div>';
+    html += '<div class="shop-grid">';
+    for (var i = 0; i < Shop.COIN_PACKS.length; i++) {
+      var p = Shop.COIN_PACKS[i];
+      var tagHtml = p.tag ? '<span class="shop-tag">' + p.tag + '</span>' : '';
+      var canAfford = gb >= p.cost;
+      html += '<div class="shop-card' + (!canAfford ? ' shop-card--locked' : '') + '" data-pack="' + p.id + '">';
+      html += tagHtml;
+      html += '<div class="shop-card-icon">🪙</div>';
+      html += '<div class="shop-card-name">' + p.name + '</div>';
+      html += '<div class="shop-card-amount">' + p.amount + ' <small>Coins</small></div>';
+      html += '<div class="shop-card-price">' + p.cost + ' 💰</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  },
+
+  _renderBoosterPacks() {
+    var Shop = window._SS.Shop;
+    var Storage = window._SS.Storage;
+    var gb = Storage.getGoldBars();
+    var html = '<div class="shop-subtitle">Stock Up on Boosters</div>';
+    html += '<div class="shop-grid">';
+    for (var i = 0; i < Shop.BOOSTER_PACKS.length; i++) {
+      var p = Shop.BOOSTER_PACKS[i];
+      var canAfford = gb >= p.cost;
+      html += '<div class="shop-card' + (!canAfford ? ' shop-card--locked' : '') + '" data-pack="' + p.id + '">';
+      html += '<div class="shop-card-icon">' + p.icon + '</div>';
+      html += '<div class="shop-card-name">' + p.name + '</div>';
+      html += '<div class="shop-card-amount">' + p.desc + '</div>';
+      html += '<div class="shop-card-price">' + p.cost + ' 💰</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  },
+
+  _renderBundles() {
+    var Shop = window._SS.Shop;
+    var Storage = window._SS.Storage;
+    var gb = Storage.getGoldBars();
+    var html = '<div class="shop-subtitle">Special Value Bundles</div>';
+    html += '<div class="shop-grid">';
+    for (var i = 0; i < Shop.BUNDLES.length; i++) {
+      var b = Shop.BUNDLES[i];
+      var tagHtml = b.tag ? '<span class="shop-tag shop-tag--bundle">' + b.tag + '</span>' : '';
+      var canAfford = gb >= b.cost;
+      html += '<div class="shop-card shop-card--bundle' + (!canAfford ? ' shop-card--locked' : '') + '" data-bundle="' + b.id + '">';
+      html += tagHtml;
+      html += '<div class="shop-card-icon">🎁</div>';
+      html += '<div class="shop-card-name">' + b.name + '</div>';
+      html += '<div class="shop-bundle-items">' + b.desc + '</div>';
+      html += '<div class="shop-card-price">' + b.cost + ' 💰</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  },
+
+  _renderInventory() {
+    var Storage = window._SS.Storage;
+    var boosters = Storage._getBoosters();
+    var items = [
+      { icon: '💰', name: 'Gold Bars', count: Storage.getGoldBars(), color: '#ffd700' },
+      { icon: '🪙', name: 'Coins', count: Storage.getCoins(), color: '#ffa502' },
+      { icon: '+3', name: 'Extra Moves', count: boosters.moves, color: '#70a1ff' },
+      { icon: '🍭', name: 'Lollipop Hammers', count: boosters.hammer, color: '#ff6348' },
+      { icon: '💣', name: 'Color Bombs', count: boosters.bomb, color: '#a55eea' },
+    ];
+    var html = '<div class="shop-subtitle">Your Inventory</div>';
+    html += '<div class="inv-list">';
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      html += '<div class="inv-item">';
+      html += '<span class="inv-icon" style="background:rgba(' + this._hexToRgb(it.color) + ',0.15);">' + it.icon + '</span>';
+      html += '<span class="inv-name">' + it.name + '</span>';
+      html += '<span class="inv-count">×' + it.count + '</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  },
+
+  _hexToRgb(hex) {
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    return r + ',' + g + ',' + b;
+  },
+
+  _bindShopClicks(tab) {
+    var self = this;
+    var Shop = window._SS.Shop;
+
+    // Handle gold pack clicks (simulated purchase)
+    if (tab === 'gold') {
+      document.querySelectorAll('.shop-card[data-pack]').forEach(function(card) {
+        card.addEventListener('click', function() {
+          var packId = card.dataset.pack;
+          var pack = Shop.GOLD_PACKS.find(function(p) { return p.id === packId; });
+          if (!pack) return;
+          self._showPurchaseConfirm(packId, 'gold', pack);
+        });
+      });
+    }
+
+    // Handle coin pack clicks (gold bars → coins)
+    if (tab === 'coins') {
+      document.querySelectorAll('.shop-card[data-pack]:not(.shop-card--locked)').forEach(function(card) {
+        card.addEventListener('click', function() {
+          var packId = card.dataset.pack;
+          var pack = Shop.COIN_PACKS.find(function(p) { return p.id === packId; });
+          if (!pack) return;
+          self._showPurchaseConfirm(packId, 'coins', pack);
+        });
+      });
+    }
+
+    // Handle booster pack clicks
+    if (tab === 'boosters') {
+      document.querySelectorAll('.shop-card[data-pack]:not(.shop-card--locked)').forEach(function(card) {
+        card.addEventListener('click', function() {
+          var packId = card.dataset.pack;
+          var pack = Shop.BOOSTER_PACKS.find(function(p) { return p.id === packId; });
+          if (!pack) return;
+          self._showPurchaseConfirm(packId, 'boosters', pack);
+        });
+      });
+    }
+
+    // Handle bundle clicks
+    if (tab === 'bundles') {
+      document.querySelectorAll('.shop-card[data-bundle]:not(.shop-card--locked)').forEach(function(card) {
+        card.addEventListener('click', function() {
+          var bid = card.dataset.bundle;
+          var bundle = Shop.BUNDLES.find(function(b) { return b.id === bid; });
+          if (!bundle) return;
+          self._showPurchaseConfirm(bid, 'bundles', bundle);
+        });
+      });
+    }
+  },
+
+  _showPurchaseConfirm(packId, type, item) {
+    var modal = document.getElementById('purchase-modal');
+    var icon = document.getElementById('purchase-icon');
+    var title = document.getElementById('purchase-title');
+    var desc = document.getElementById('purchase-desc');
+    var confirmBtn = document.getElementById('btn-confirm-buy');
+
+    icon.textContent = type === 'gold' ? '💳' : '💰';
+    title.textContent = type === 'gold' ? 'Buy ' + item.name + '?' : 'Spend Gold Bars?';
+
+    if (type === 'gold') {
+      var total = item.amount + (item.bonus || 0);
+      desc.textContent = total + ' Gold Bars for ' + item.price + (item.bonus ? ' (includes +' + item.bonus + ' bonus!)' : '');
+    } else if (type === 'bundles') {
+      desc.textContent = item.name + ' | ' + item.cost + ' 💰 | ' + item.desc;
+    } else {
+      desc.textContent = item.name + ' for ' + item.cost + ' 💰';
+    }
+
+    modal.classList.add('active');
+
+    var self = this;
+    confirmBtn.onclick = function() {
+      modal.classList.remove('active');
+      var result;
+      switch (type) {
+        case 'gold': result = Shop.buyGoldPack(packId); break;
+        case 'coins': result = Shop.buyCoinPack(packId); break;
+        case 'boosters': result = Shop.buyBoosterPack(packId); break;
+        case 'bundles': result = Shop.buyBundle(packId); break;
+      }
+      if (result && result.success !== false) {
+        self._showPurchaseSuccess(item);
+      }
+    };
+    document.getElementById('btn-cancel-buy').onclick = function() {
+      modal.classList.remove('active');
+    };
+  },
+
+  _showPurchaseSuccess(item) {
+    var modal = document.getElementById('purchase-success');
+    var desc = document.getElementById('success-desc');
+    var name = item.name || '';
+    desc.textContent = name + ' added to your account!';
+    modal.classList.add('active');
+    this._updateShopBalance();
+    // Re-render current tab
+    this._renderShopTab(this._currentShopTab);
+    document.getElementById('btn-ok-success').onclick = function() {
+      modal.classList.remove('active');
+    };
+  },
+
 };
 
 window._SS.UI = UI;

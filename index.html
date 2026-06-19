@@ -10,9 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/main.css?v=10">
-<link rel="stylesheet" href="css/animations.css?v=10">
-<link rel="stylesheet" href="css/candy-designs.css?v=10">
+<link rel="stylesheet" href="css/main.css?v=11">
+<link rel="stylesheet" href="css/animations.css?v=11">
+<link rel="stylesheet" href="css/candy-designs.css?v=11">
 </head>
 <body>
 
@@ -22,7 +22,8 @@
   <div id="world-map" class="screen active">
     <div class="map-header">
       <h1 class="map-title">🍬 Sugar Swipe</h1>
-      <p class="map-sub"> ❤️ <span id="map-lives">5</span> &nbsp;|&nbsp; 🪙 <span id="map-coins">0</span></p>
+      <p class="map-sub"> ❤️ <span id="map-lives">5</span> &nbsp;|&nbsp; 🪙 <span id="map-coins">0</span> &nbsp;|&nbsp; 💰 <span id="map-goldbars">0</span></p>
+      <button id="btn-open-shop" class="btn--shop-entry">🛒 Shop</button>
     </div>
     <div id="world-list" class="world-list"></div>
   </div>
@@ -118,7 +119,7 @@
     </div>
   </div>
 
-  <!-- ===== LEVEL COMPLETE SCREEN ===== -->
+  <!-- ===== OUT OF LIVES SCREEN ===== -->
   <div id="level-complete" class="screen overlay">
     <div class="glass-panel result-panel">
       <h2 class="result-title">Level Complete!</h2>
@@ -162,19 +163,69 @@
     </div>
   </div>
 
+  <!-- ===== SHOP SCREEN ===== -->
+  <div id="shop-screen" class="screen">
+    <div class="shop-header">
+      <div class="shop-balance">
+        <div class="bal-item">💰 <span id="shop-goldbars">0</span></div>
+        <div class="bal-item">🪙 <span id="shop-coins">0</span></div>
+      </div>
+      <h1 class="shop-title">Sweet Shop</h1>
+    </div>
+    <div class="shop-tabs">
+      <button class="shop-tab active" data-tab="gold">💰 Gold</button>
+      <button class="shop-tab" data-tab="coins">🪙 Coins</button>
+      <button class="shop-tab" data-tab="boosters">🎒 Boosters</button>
+      <button class="shop-tab" data-tab="bundles">🎁 Bundles</button>
+      <button class="shop-tab" data-tab="inventory">📦 Inventory</button>
+    </div>
+    <div class="shop-content" id="shop-content"></div>
+    <div class="back-btn-wrapper">
+      <button id="btn-back-shop" class="btn--back" aria-label="Back">
+        <svg viewBox="0 0 24 24"><polyline points="15,4 7,12 15,20"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== PURCHASE CONFIRMATION ===== -->
+  <div id="purchase-modal" class="screen overlay">
+    <div class="glass-panel purchase-panel">
+      <div id="purchase-icon" class="purchase-icon">💰</div>
+      <h2 id="purchase-title" class="result-title">Confirm Purchase</h2>
+      <p id="purchase-desc" class="result-sub"></p>
+      <div class="result-buttons">
+        <button id="btn-confirm-buy" class="btn btn--primary">Buy Now</button>
+        <button id="btn-cancel-buy" class="btn btn--secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PURCHASE SUCCESS ===== -->
+  <div id="purchase-success" class="screen overlay">
+    <div class="glass-panel purchase-panel">
+      <div class="success-check">✅</div>
+      <h2 class="result-title">Purchased!</h2>
+      <p id="success-desc" class="result-sub"></p>
+      <div class="result-buttons">
+        <button id="btn-ok-success" class="btn btn--primary">Sweet!</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<script src="js/storage.js?v=10"></script>
-<script src="js/scoring.js?v=10"></script>
-<script src="js/levels.js?v=10"></script>
-<script src="js/board.js?v=10"></script>
-<script src="js/match-engine.js?v=10"></script>
-<script src="js/special.js?v=10"></script>
-<script src="js/obstacles.js?v=10"></script>
-<script src="js/audio.js?v=10"></script>
-<script src="js/cascade.js?v=10"></script>
-<script src="js/input.js?v=10"></script>
-<script src="js/ui.js?v=10"></script>
-<script src="js/main.js?v=10"></script>
+<script src="js/storage.js?v=11"></script>
+<script src="js/scoring.js?v=11"></script>
+<script src="js/levels.js?v=11"></script>
+<script src="js/board.js?v=11"></script>
+<script src="js/match-engine.js?v=11"></script>
+<script src="js/special.js?v=11"></script>
+<script src="js/obstacles.js?v=11"></script>
+<script src="js/audio.js?v=11"></script>
+<script src="js/cascade.js?v=11"></script>
+<script src="js/input.js?v=11"></script>
+<script src="js/ui.js?v=11"></script>
+<script src="js/shop.js?v=11"></script>
+<script src="js/main.js?v=11"></script>
 </body>
 </html>
