@@ -398,11 +398,11 @@ const UI = {
 
   showWorldMap() {
     this.showScreen('world-map');
+    var Storage = window._SS.Storage;
     document.getElementById('map-lives') && (document.getElementById('map-lives').textContent = Storage.getLives());
     document.getElementById('map-coins') && (document.getElementById('map-coins').textContent = Storage.getCoins());
     var container = document.getElementById('world-list');
     if (!container) return;
-    var Storage = window._SS.Storage;
     var worlds = this.WORLD_DATA;
     var html = '';
     for (var i = 0; i < worlds.length; i++) {
