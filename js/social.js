@@ -9,18 +9,22 @@ const Social = {
       id: 'maya',
       name: 'Maya',
       emoji: '🌸',
+      icon: '🌸',
       title: 'Friendly Rival',
-      personality: 'Scores 90-110% of your average. Sends lives daily.',
+      story: 'Maya is a cheerful candy enthusiast who loves a friendly competition. She runs a small bakery in Candy Meadow and always shares her sweet creations. She believes the best way to improve is to have fun together!',
+      traits: ['Cheerful ☀️', 'Supportive 🤝', 'Bakery Owner 🧁'],
       scoreRange: [0.90, 1.10],
-      giftChance: 0.4,      // 40% chance to have a gift waiting
+      giftChance: 0.4,
       giftTypes: ['life'],
     },
     {
       id: 'rex',
       name: 'Rex',
       emoji: '🦖',
+      icon: '🦖',
       title: 'Aggressive Challenger',
-      personality: 'Scores 110-130% of your best. Challenges every 3 days.',
+      story: 'Rex is a retired gamer-turned-candy-crusher. He treats every level like a boss fight! He pushes everyone to be their best with tough love and high scores. Underneath the fierce exterior, he respects true skill.',
+      traits: ['Competitive 🏆', 'Intense ⚡', 'Ex-Pro Gamer 🎮'],
       scoreRange: [1.10, 1.30],
       giftChance: 0.25,
       giftTypes: ['life', 'coins'],
@@ -29,8 +33,10 @@ const Social = {
       id: 'luna',
       name: 'Luna',
       emoji: '🌙',
+      icon: '🌙',
       title: 'Casual Supporter',
-      personality: 'Scores 70-90% of your average. Sends gift boosters.',
+      story: 'Luna is a night-owl artist who plays Sugar Swipe to unwind. She loves the beautiful candy designs and plays at her own pace. She always has a kind word and a thoughtful gift for her friends.',
+      traits: ['Artistic 🎨', 'Kind 💜', 'Night Owl 🦉'],
       scoreRange: [0.70, 0.90],
       giftChance: 0.5,
       giftTypes: ['booster_moves', 'booster_hammer'],
@@ -44,28 +50,28 @@ const Social = {
     booster_hammer: { amount: 1, icon: '🍭', label: '1 Hammer' },
   },
 
-  /** Gifts sent per day limit (for player → bot) */
   MAX_SEND_PER_DAY: 3,
-  SEND_GIFT_COST: 50, // coins
+  SEND_GIFT_COST: 50,
 
-  /** ---- Data ---- */
+  /* ---- Helpers ---- */
+  _St() { return window._SS.Storage; },
+
   _getSocialData() {
-    return Storage.get('social') || { gifts: {}, sentCount: 0, sendDate: '', activity: [], leaderboard: {} };
+    return this._St().get('social') || { gifts: {}, sentCount: 0, sendDate: '', activity: [], leaderboard: {} };
   },
 
   _saveSocialData(data) {
-    Storage.set('social', data);
+    this._St().set('social', data);
   },
 
-  /** ---- Bot Score Simulation ---- */
+  /* ---- Bot Score ---- */
   getBotScore(botId) {
     var data = this._getSocialData();
     if (!data.leaderboard) data.leaderboard = {};
-    var lb = data.leaderboard;
-    if (!lb[botId]) {
-      lb[botId] = { weekly: 0, allTime: 0, weeklyStars: 0, allTimeStars: 0, lastUpdated: 0 };
+    if (!data.leaderboard[botId]) {
+      data.leaderboard[botId] = { weekly: 0, allTime: 0, weeklyStars: 0, allTimeStars: 0, lastUpdated: 0 };
     }
-    return lb[botId];
+    return data.leaderboard[botId];
   },
 
   /** Update bot scores when player completes a level */
@@ -74,7 +80,6 @@ const Social = {
     if (!data.leaderboard) data.leaderboard = {};
     var lb = data.leaderboard;
 
-    // Calculate player's average/best for bot scaling
     var playerTotal = 0, playerCount = 0;
     for (var key in lb) {
       if (lb[key].allTime > 0) { playerTotal += lb[key].allTime; playerCount++; }
@@ -86,10 +91,9 @@ const Social = {
       if (!lb[bot.id]) {
         lb[bot.id] = { weekly: 0, allTime: 0, weeklyStars: 0, allTimeStars: 0, lastUpdated: 0 };
       }
-
       var range = bot.scoreRange;
       var multiplier = range[0] + Math.random() * (range[1] - range[0]);
-      var drift = 0.85 + Math.random() * 0.3; // ±15% drift
+      var drift = 0.85 + Math.random() * 0.3;
       var botScore = Math.round(playerScore * multiplier * drift);
       var botStars = Math.min(3, Math.max(1, Math.round(playerStars * multiplier)));
 
@@ -99,43 +103,27 @@ const Social = {
       lb[bot.id].allTimeStars += botStars;
       lb[bot.id].lastUpdated = Date.now();
 
-      // Add bot activity to feed
       this._addActivity(bot.id, bot.name, bot.emoji,
         'completed Level ' + levelId + ' with ' + botScore.toLocaleString() + ' pts! ' + '⭐'.repeat(botStars));
     }
 
-    // Also add player activity
     this._addActivity('player', 'You', '👤',
       'completed Level ' + levelId + ' with ' + playerScore.toLocaleString() + ' pts! ' + '⭐'.repeat(playerStars));
 
-    // Clean old activities (keep 20)
-    if (data.activity.length > 20) {
-      data.activity = data.activity.slice(-20);
-    }
+    if (data.activity.length > 20) data.activity = data.activity.slice(-20);
 
-    data.leaderboard = lb;
     this._saveSocialData(data);
-
-    // Check for gifts
     this._maybeGenerateGifts();
   },
 
   _addActivity(userId, name, emoji, text) {
     var data = this._getSocialData();
     data.activity = data.activity || [];
-    data.activity.push({
-      userId: userId,
-      name: name,
-      emoji: emoji,
-      text: text,
-      time: Date.now(),
-    });
+    data.activity.push({ userId: userId, name: name, emoji: emoji, text: text, time: Date.now() });
     this._saveSocialData(data);
   },
 
-  /** ---- Gifts ---- */
-
-  /** Check if any bots have gifts waiting */
+  /* ---- Gifts ---- */
   getPendingGifts() {
     var data = this._getSocialData();
     var gifts = data.gifts || {};
@@ -149,7 +137,17 @@ const Social = {
     return pending;
   },
 
-  /** Generate random gifts from bots */
+  /** Get total gift notification count */
+  getGiftNotifyCount() {
+    var data = this._getSocialData();
+    var gifts = data.gifts || {};
+    var count = 0;
+    for (var botId in gifts) {
+      count += (gifts[botId] || []).length;
+    }
+    return count;
+  },
+
   _maybeGenerateGifts() {
     var data = this._getSocialData();
     var gifts = data.gifts || {};
@@ -157,31 +155,22 @@ const Social = {
 
     for (var i = 0; i < this.BOTS.length; i++) {
       var bot = this.BOTS[i];
-
-      // Check if bot already gifted today
       if (gifts[bot.id] && gifts[bot.id].length > 0) {
-        // Check if there's a gift from today
-        var hasTodayGift = false;
+        var hasToday = false;
         for (var j = 0; j < gifts[bot.id].length; j++) {
-          if (gifts[bot.id][j].date === today) {
-            hasTodayGift = true;
-            break;
-          }
+          if (gifts[bot.id][j].date === today) { hasToday = true; break; }
         }
-        if (hasTodayGift) continue;
+        if (hasToday) continue;
       }
-
-      // Random chance
       if (Math.random() < bot.giftChance) {
         if (!gifts[bot.id]) gifts[bot.id] = [];
-        var giftTypes = bot.giftTypes;
-        var type = giftTypes[Math.floor(Math.random() * giftTypes.length)];
+        var types = bot.giftTypes;
+        var type = types[Math.floor(Math.random() * types.length)];
         gifts[bot.id].push({ type: type, date: today, time: Date.now() });
         this._addActivity(bot.id, bot.name, bot.emoji,
-          'sent you a gift: ' + (this.GIFT_VALUES[type] ? this.GIFT_VALUES[type].label : type) + '!');
+          'sent you a gift: ' + (this.GIFT_VALUES[type] ? this.GIFT_VALUES[type].label : type) + '! 🎁');
       }
     }
-
     data.gifts = gifts;
     this._saveSocialData(data);
   },
@@ -191,29 +180,29 @@ const Social = {
     var data = this._getSocialData();
     var gifts = data.gifts || {};
     if (!gifts[botId] || gifts[botId].length === 0) return null;
-
     var gift = gifts[botId].shift();
     data.gifts = gifts;
     this._saveSocialData(data);
 
-    // Apply the gift
     var gv = this.GIFT_VALUES[gift.type];
     if (!gv) return gift;
 
+    var St = this._St();
     switch (gift.type) {
       case 'life':
-        var d = Storage.get('lives') ? (JSON.parse(JSON.stringify(Storage._getLivesData ? Storage._getLivesData() : { lives: 3, lastRegenTime: Date.now() }))) : { lives: 3, lastRegenTime: Date.now() };
-        d.lives = Math.min(Storage.MAX_LIVES, d.lives + gv.amount);
-        Storage.set('lives', d);
+        var livesData = St.get('lives');
+        if (!livesData) livesData = { lives: St.MAX_LIVES, lastRegenTime: Date.now() };
+        livesData.lives = Math.min(St.MAX_LIVES, (livesData.lives || St.MAX_LIVES) + gv.amount);
+        St.set('lives', livesData);
         break;
       case 'coins':
-        Storage.addCoins(gv.amount);
+        St.addCoins(gv.amount);
         break;
       case 'booster_moves':
-        Storage.addBooster('moves', gv.amount);
+        St.addBooster('moves', gv.amount);
         break;
       case 'booster_hammer':
-        Storage.addBooster('hammer', gv.amount);
+        St.addBooster('hammer', gv.amount);
         break;
     }
 
@@ -224,130 +213,86 @@ const Social = {
   sendGiftToBot(botId) {
     var data = this._getSocialData();
     var today = new Date().toDateString();
-
-    // Reset daily count if new day
-    if (data.sendDate !== today) {
-      data.sentCount = 0;
-      data.sendDate = today;
-    }
-
+    if (data.sendDate !== today) { data.sentCount = 0; data.sendDate = today; }
     if (data.sentCount >= this.MAX_SEND_PER_DAY) {
       return { success: false, reason: 'Max ' + this.MAX_SEND_PER_DAY + ' gifts per day' };
     }
-
-    if (!Storage.spendCoins(this.SEND_GIFT_COST)) {
+    if (!this._St().spendCoins(this.SEND_GIFT_COST)) {
       return { success: false, reason: 'Not enough coins (need ' + this.SEND_GIFT_COST + ')' };
     }
-
     data.sentCount++;
     this._saveSocialData(data);
 
-    var bot = this.BOTS.find(function(b) { return b.id === botId; });
-    // Bot might send a gift back (30% chance)
-    var returned = Math.random() < 0.3;
-    if (returned) {
-      this._maybeGenerateGifts();
+    var bot = null;
+    for (var i = 0; i < this.BOTS.length; i++) {
+      if (this.BOTS[i].id === botId) { bot = this.BOTS[i]; break; }
     }
-
-    this._addActivity('player', 'You', '👤', 'sent ' + (bot ? bot.name : 'bot') + ' a gift! ❤️');
-
+    var returned = Math.random() < 0.3;
+    if (returned) this._maybeGenerateGifts();
+    this._addActivity('player', 'You', '👤', 'sent ' + (bot ? bot.name : 'friend') + ' a gift! ❤️');
     return { success: true, sentCount: data.sentCount, botReplied: returned };
   },
 
-  /** ---- Leaderboard ---- */
+  /* ---- Leaderboard ---- */
   getLeaderboard(period) {
-    // period = 'weekly' | 'allTime'
     var data = this._getSocialData();
     if (!data.leaderboard) data.leaderboard = {};
     var lb = data.leaderboard;
-    var Storage = window._SS.Storage;
+    var St = this._St();
 
-    // Get player stats
-    var playerWeeklyScore = 0, playerAllTimeScore = 0, playerWeeklyStars = 0, playerAllTimeStars = 0;
+    var pWeeklyScore = 0, pAllTimeScore = 0, pWeeklyStars = 0, pAllTimeStars = 0;
     var levelsCompleted = 0;
-    var progress = Storage.get('progress') || {};
-    var highscores = Storage.get('highscores') || {};
+    var progress = St.get('progress') || {};
+    var highscores = St.get('highscores') || {};
 
     for (var key in progress) {
-      if (progress[key] > 0) {
-        playerAllTimeStars += progress[key];
-        playerWeeklyStars += progress[key];
-        levelsCompleted++;
-      }
+      if (progress[key] > 0) { pAllTimeStars += progress[key]; pWeeklyStars += progress[key]; levelsCompleted++; }
     }
-    for (var key in highscores) {
-      playerAllTimeScore += highscores[key];
-      playerWeeklyScore += highscores[key];
-    }
+    for (var k in highscores) { pAllTimeScore += highscores[k]; pWeeklyScore += highscores[k]; }
 
-    // Determine current world
-    var unlockedWorld = Storage.getUnlockedWorld();
+    var unlockedWorld = St.getUnlockedWorld ? St.getUnlockedWorld() : 1;
     var worldNames = ['', 'Candy Meadow', 'Frosted Peaks', 'Chocolate Swamp', 'Licorice Lab', 'Marmalade Manor', 'Rainbow Summit'];
     var currentWorld = worldNames[Math.min(unlockedWorld, 6)] || 'Candy Meadow';
-    var totalLevels = 60;
 
     var entries = [{
-      id: 'player',
-      name: 'You',
-      emoji: '👤',
-      score: period === 'weekly' ? playerWeeklyScore : playerAllTimeScore,
-      stars: period === 'weekly' ? playerWeeklyStars : playerAllTimeStars,
-      world: currentWorld,
-      levelsCompleted: levelsCompleted,
-      totalLevels: totalLevels,
-      isPlayer: true,
+      id: 'player', name: 'You', emoji: '👤',
+      score: period === 'weekly' ? pWeeklyScore : pAllTimeScore,
+      stars: period === 'weekly' ? pWeeklyStars : pAllTimeStars,
+      world: currentWorld, levelsCompleted: levelsCompleted, totalLevels: 60, isPlayer: true,
     }];
 
     for (var i = 0; i < this.BOTS.length; i++) {
       var bot = this.BOTS[i];
       if (!lb[bot.id]) lb[bot.id] = { weekly: 0, allTime: 0, weeklyStars: 0, allTimeStars: 0 };
-      var botData = lb[bot.id];
-
-      // If first time, seed with some scores
-      if (botData.allTime === 0) {
+      var bd = lb[bot.id];
+      if (bd.allTime === 0) {
         var seedScore = 5000 + Math.floor(Math.random() * 20000);
-        botData.allTime = seedScore;
-        botData.allTimeStars = Math.floor(seedScore / 2000);
-        botData.weekly = Math.floor(seedScore * 0.3);
-        botData.weeklyStars = Math.floor(botData.allTimeStars * 0.3);
+        bd.allTime = seedScore;
+        bd.allTimeStars = Math.floor(seedScore / 2000);
+        bd.weekly = Math.floor(seedScore * 0.3);
+        bd.weeklyStars = Math.floor(bd.allTimeStars * 0.3);
       }
-
-      // Calculate bot world based on stars
-      var botStars = period === 'weekly' ? botData.weeklyStars : botData.allTimeStars;
-      var botWorld = worldNames[1]; // default world 1
-      var thresholds = [0, 0, 10, 20, 30, 40, 50]; // cumulative stars to reach each world
-      for (var w = 1; w <= 6; w++) {
-        if (botStars >= thresholds[w]) botWorld = worldNames[w];
-      }
-      var botLevels = Math.min(totalLevels, Math.floor(botStars / 1.5));
+      var botStars = period === 'weekly' ? bd.weeklyStars : bd.allTimeStars;
+      var botWorld = worldNames[1];
+      var thresh = [0, 0, 10, 20, 30, 40, 50];
+      for (var w = 1; w <= 6; w++) { if (botStars >= thresh[w]) botWorld = worldNames[w]; }
+      var botLevels = Math.min(60, Math.floor(botStars / 1.5));
 
       entries.push({
-        id: bot.id,
-        name: bot.name,
-        emoji: bot.emoji,
-        score: period === 'weekly' ? botData.weekly : botData.allTime,
-        stars: botStars,
-        world: botWorld,
-        levelsCompleted: Math.max(1, botLevels),
-        totalLevels: totalLevels,
-        isPlayer: false,
+        id: bot.id, name: bot.name, emoji: bot.emoji,
+        score: period === 'weekly' ? bd.weekly : bd.allTime,
+        stars: botStars, world: botWorld,
+        levelsCompleted: Math.max(1, botLevels), totalLevels: 60, isPlayer: false,
       });
     }
 
-    // Sort by score descending
     entries.sort(function(a, b) { return b.score - a.score; });
-
-    // Add rank
-    for (var j = 0; j < entries.length; j++) {
-      entries[j].rank = j + 1;
-    }
-
+    for (var j = 0; j < entries.length; j++) entries[j].rank = j + 1;
     this._saveSocialData(data);
-
     return entries;
   },
 
-  /** ---- Feed ---- */
+  /* ---- Feed ---- */
   getFeed(limit) {
     var data = this._getSocialData();
     var activities = (data.activity || []).slice();
@@ -356,29 +301,21 @@ const Social = {
     return activities;
   },
 
-  /** ---- Weekly Reset ---- */
+  /** Weekly reset on Monday */
   checkWeeklyReset() {
     var data = this._getSocialData();
     var now = new Date();
-    // Reset if Monday
-    if (now.getDay() === 1) {
-      var lastReset = data.lastWeeklyReset || '';
-      var today = now.toDateString();
-      if (lastReset !== today) {
-        var lb = data.leaderboard || {};
-        for (var key in lb) {
-          lb[key].weekly = 0;
-          lb[key].weeklyStars = 0;
-        }
-        data.lastWeeklyReset = today;
-        data.leaderboard = lb;
-        this._saveSocialData(data);
-      }
+    if (now.getDay() !== 1) return;
+    var today = now.toDateString();
+    if (data.lastWeeklyReset === today) return;
+    if (!data.leaderboard) data.leaderboard = {};
+    for (var key in data.leaderboard) {
+      data.leaderboard[key].weekly = 0;
+      data.leaderboard[key].weeklyStars = 0;
     }
+    data.lastWeeklyReset = today;
+    this._saveSocialData(data);
   },
 };
-
-/** Shortcut from storage */
-var Storage = window._SS.Storage;
 
 window._SS.Social = Social;

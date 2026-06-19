@@ -751,26 +751,36 @@ const UI = {
     var Social = window._SS.Social;
     Social.checkWeeklyReset();
     this._renderGiftBanner();
-    this._switchSocialTab('feed');
-    this._bindSocialTabs();
+    this._renderSocialBadges();
+    this._switchSocialTab('board');
+  },
+
+  /** Update gift notification badges */
+  _renderSocialBadges() {
+    var Social = window._SS.Social;
+    var count = Social.getGiftNotifyCount();
+    var badge = document.getElementById('social-btn-badge');
+    var feedBadge = document.getElementById('feed-tab-badge');
+    if (badge) badge.textContent = count > 0 ? count : '';
+    if (badge) badge.style.display = count > 0 ? 'flex' : 'none';
+    if (feedBadge) feedBadge.textContent = count > 0 ? count : '';
+    if (feedBadge) feedBadge.style.display = count > 0 ? 'flex' : 'none';
   },
 
   _switchSocialTab(tab) {
-    // Update tab buttons
     document.querySelectorAll('.social-tab').forEach(function(t) {
       t.classList.toggle('active', t.dataset.tab === tab);
     });
-    // Show/hide sections
-    var feedSection = document.getElementById('social-feed-section');
-    var friendsSection = document.getElementById('social-friends-section');
-    var lbSection = document.getElementById('social-lb-section');
-    if (feedSection) feedSection.style.display = tab === 'feed' ? 'block' : 'none';
-    if (friendsSection) friendsSection.style.display = tab === 'friends' ? 'block' : 'none';
-    if (lbSection) lbSection.style.display = tab === 'leaderboard' ? 'block' : 'none';
+    var feed = document.getElementById('social-feed-section');
+    var friends = document.getElementById('social-friends-section');
+    var lb = document.getElementById('social-lb-section');
+    if (feed) feed.style.display = tab === 'feed' ? 'block' : 'none';
+    if (friends) friends.style.display = tab === 'friends' ? 'block' : 'none';
+    if (lb) lb.style.display = tab === 'board' ? 'block' : 'none';
 
-    if (tab === 'feed') this._renderFeed();
-    if (tab === 'friends') this._renderBots();
-    if (tab === 'leaderboard') this._renderLeaderboard('weekly');
+    if (tab === 'feed') { this._renderFeed(); this._renderGiftBanner(); }
+    if (tab === 'friends') this._renderBotProfiles();
+    if (tab === 'board') this._renderLeaderboard('weekly');
   },
 
   _renderGiftBanner() {
@@ -788,42 +798,50 @@ const UI = {
       var p = pending[i];
       var gv = Social.GIFT_VALUES[p.gift.type];
       html += '<div class="gift-alert" data-bot="' + p.botId + '">';
-      html += '<span class="gift-alert-icon">' + p.bot.emoji + '</span>';
-      html += '<span class="gift-alert-text">' + p.bot.name + ' sent you ' + (gv ? gv.label : 'a gift') + '!</span>';
-      html += '<button class="gift-accept-btn" data-bot="' + p.botId + '">Claim</button>';
+      html += '<span class="gift-alert-emoji">' + p.bot.emoji + '</span>';
+      html += '<div class="gift-alert-mid">';
+      html += '<span class="gift-alert-name">' + p.bot.name + '</span>';
+      html += '<span class="gift-alert-item">' + (gv ? gv.icon + ' ' + gv.label : 'a gift') + '</span>';
+      html += '</div>';
+      html += '<button class="gift-open-btn" data-bot="' + p.botId + '">Open 🎁</button>';
       html += '</div>';
     }
     banner.innerHTML = html;
 
     var self = this;
-    banner.querySelectorAll('.gift-accept-btn').forEach(function(btn) {
+    banner.querySelectorAll('.gift-open-btn').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         var botId = btn.dataset.bot;
+        var Social = window._SS.Social;
+        var AudioFX = window._SS.AudioFX;
+        if (AudioFX) AudioFX.purchaseSuccess();
         var result = Social.acceptGift(botId);
         if (result && result.value) {
-          if (window._SS.AudioFX) window._SS.AudioFX.buttonTap();
+          if (AudioFX) AudioFX.purchaseSuccess();
         }
         self._renderGiftBanner();
-        self._renderBots();
+        self._renderSocialBadges();
+        self._renderBotProfiles();
+        self._renderFeed();
       });
     });
   },
 
   _renderFeed() {
     var Social = window._SS.Social;
-    var feed = Social.getFeed(10);
+    var feed = Social.getFeed(20);
     var container = document.getElementById('friend-feed');
     if (!container) return;
     if (feed.length === 0) {
-      container.innerHTML = '<div class="feed-empty">No activity yet. Complete some levels!</div>';
+      container.innerHTML = '<div class="feed-empty">✨ No activity yet. Complete some levels!</div>';
       return;
     }
     var html = '';
     for (var i = 0; i < feed.length; i++) {
       var item = feed[i];
       var timeStr = this._formatTimeAgo(item.time);
-      html += '<div class="feed-item">';
+      html += '<div class="feed-item' + (item.userId === 'player' ? '' : ' feed-item--bot') + '">';
       html += '<span class="feed-avatar">' + item.emoji + '</span>';
       html += '<div class="feed-body">';
       html += '<span class="feed-name">' + item.name + '</span> ';
@@ -833,9 +851,11 @@ const UI = {
       html += '</div>';
     }
     container.innerHTML = html;
+    container.scrollTop = 0;
   },
 
-  _renderBots() {
+  /** Bot profile cards with stories */
+  _renderBotProfiles() {
     var Social = window._SS.Social;
     var pending = Social.getPendingGifts();
     var pendingMap = {};
@@ -850,31 +870,60 @@ const UI = {
     var html = '';
     for (var i = 0; i < Social.BOTS.length; i++) {
       var bot = Social.BOTS[i];
-      var botData = Social.getBotScore(bot.id);
       var hasGift = !!pendingMap[bot.id];
-      html += '<div class="bot-card' + (hasGift ? ' bot-card--gift' : '') + '">';
-      html += '<div class="bot-avatar">' + bot.emoji + '</div>';
-      html += '<div class="bot-info">';
-      html += '<div class="bot-name">' + bot.name + ' <span class="bot-title">' + bot.title + '</span></div>';
-      html += '<div class="bot-personality">' + bot.personality + '</div>';
-      html += '<div class="bot-stats">⭐ ' + (botData.allTimeStars || 0).toLocaleString() + ' total stars</div>';
-      html += '</div>';
-      if (hasGift) {
-        html += '<div class="bot-gift-badge">🎁</div>';
+      html += '<div class="bot-profile' + (hasGift ? ' bot-profile--gift' : '') + '">';
+      // Avatar row
+      html += '<div class="bot-profile-header">';
+      html += '<div class="bot-avatar-lg">' + bot.icon + '</div>';
+      html += '<div class="bot-profile-title">';
+      html += '<span class="bot-profile-name">' + bot.name + ' <span class="bot-profile-tag">' + bot.title + '</span></span>';
+      html += '<div class="bot-traits">';
+      for (var j = 0; j < bot.traits.length; j++) {
+        html += '<span class="bot-trait-tag">' + bot.traits[j] + '</span>';
       }
-      html += '<button class="btn-send-gift" data-bot="' + bot.id + '"' + (!canSend ? ' disabled' : '') + '>' + (canSend ? '🎁 Send Gift' : 'Max Today') + '</button>';
+      html += '</div>';
+      html += '</div>';
+      if (hasGift) html += '<div class="bot-gift-badge">🎁</div>';
+      html += '</div>';
+      // Story
+      html += '<p class="bot-story">' + bot.story + '</p>';
+      // Actions
+      html += '<div class="bot-actions">';
+      if (hasGift) {
+        html += '<button class="btn-open-gift" data-bot="' + bot.id + '">🎁 Open Gift</button>';
+      }
+      html += '<button class="btn-send-gift" data-bot="' + bot.id + '"' + (!canSend ? ' disabled' : '') + '>';
+      html += '🎁 Send Gift ' + (canSend ? '(' + (Social.MAX_SEND_PER_DAY - (data.sentCount || 0)) + ' left)' : '(Max Today)');
+      html += '</button>';
+      html += '</div>';
       html += '</div>';
     }
     container.innerHTML = html;
 
     var self = this;
+    // Open gift
+    container.querySelectorAll('.btn-open-gift').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var Social = window._SS.Social;
+        var AudioFX = window._SS.AudioFX;
+        if (AudioFX) AudioFX.purchaseSuccess();
+        Social.acceptGift(btn.dataset.bot);
+        self._renderBotProfiles();
+        self._renderGiftBanner();
+        self._renderSocialBadges();
+        self._renderFeed();
+      });
+    });
+    // Send gift
     container.querySelectorAll('.btn-send-gift:not([disabled])').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        if (window._SS.AudioFX) window._SS.AudioFX.buttonTap();
-        var botId = btn.dataset.bot;
-        var result = Social.sendGiftToBot(botId);
-        if (result.success) {
-          self._renderBots();
+        var AudioFX = window._SS.AudioFX;
+        if (AudioFX) AudioFX.buttonTap();
+        var result = window._SS.Social.sendGiftToBot(btn.dataset.bot);
+        if (result && result.success) {
+          if (AudioFX) AudioFX.purchase();
+          self._renderBotProfiles();
+          self._renderSocialBadges();
           self._renderFeed();
         }
       });
@@ -886,6 +935,10 @@ const UI = {
     var entries = Social.getLeaderboard(period);
     var container = document.getElementById('leaderboard-list');
     if (!container) return;
+    // Update lb-tab active states
+    document.querySelectorAll('.lb-tab').forEach(function(t) {
+      t.classList.toggle('active', t.dataset.period === period);
+    });
     var html = '';
     for (var i = 0; i < entries.length; i++) {
       var e = entries[i];
@@ -903,23 +956,23 @@ const UI = {
       html += '</div>';
     }
     container.innerHTML = html;
+
+    // Bind lb sub-tabs
+    var self = this;
+    document.querySelectorAll('.lb-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        self._renderLeaderboard(tab.dataset.period);
+      });
+    });
   },
 
-  _bindSocialTabs() {
+  /** Bind social main tabs after DOM ready */
+  bindSocialNav() {
     var self = this;
-    // Social main tabs (Feed / Friends / Leaderboard)
     document.querySelectorAll('.social-tab').forEach(function(tab) {
       tab.addEventListener('click', function() {
         if (window._SS.AudioFX) window._SS.AudioFX.buttonTap();
         self._switchSocialTab(tab.dataset.tab);
-      });
-    });
-    // Leaderboard sub-tabs (Weekly / All Time)
-    document.querySelectorAll('.lb-tab').forEach(function(tab) {
-      tab.addEventListener('click', function() {
-        document.querySelectorAll('.lb-tab').forEach(function(t) { t.classList.remove('active'); });
-        tab.classList.add('active');
-        self._renderLeaderboard(tab.dataset.period);
       });
     });
   },

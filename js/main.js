@@ -355,10 +355,14 @@ window._SS = window._SS || {};
 
   // ===== LIVES =====
   function updateLivesDisplay() {
-    const lives = Storage.getLives();
-    const el = document.getElementById('hud-lives');
+    var lives = Storage.getLives();
+    var el = document.getElementById('hud-lives');
     if (el) {
-      el.textContent = '❤️'.repeat(Math.max(0, lives)) + '🖤'.repeat(Math.max(0, 5 - lives));
+      var hearts = '';
+      for (var i = 0; i < 5; i++) {
+        hearts += '<span class="heart-icon">' + (i < lives ? '❤️' : '🖤') + '</span>';
+      }
+      el.innerHTML = hearts;
     }
   }
 
@@ -697,14 +701,26 @@ window._SS = window._SS || {};
     } else {
       UI.showWorldMap();
     }
+    updateFriendBadge();
+  }
+
+  /** Refresh gift notification badge on world map */
+  function updateFriendBadge() {
+    var badge = document.getElementById('social-btn-badge');
+    if (!badge) return;
+    var count = window._SS.Social ? window._SS.Social.getGiftNotifyCount() : 0;
+    badge.textContent = count > 0 ? count : '';
+    badge.style.display = count > 0 ? 'flex' : 'none';
   }
 
   // ===== INIT =====
   async function init() {
     setupInput();
     setupButtons();
+    UI.bindSocialNav();
     await Levels.load();
     UI.showWorldMap();
+    updateFriendBadge();
   }
 
   window._SS._startLevel = startLevel;

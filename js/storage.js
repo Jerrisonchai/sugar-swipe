@@ -25,6 +25,42 @@ const Storage = {
   remove(key) {
     localStorage.removeItem(this.PREFIX + key);
   },
+  /** Return highest unlocked world number (1-6) */
+  getUnlockedWorld() {
+    var progress = this.get('progress') || {};
+    var maxWorld = 1;
+    for (var key in progress) {
+      if (progress[key] > 0) {
+        var lvl = parseInt(key, 10);
+        if (!isNaN(lvl)) {
+          var world = Math.ceil(lvl / 10);
+          if (world > maxWorld) maxWorld = world;
+        }
+      }
+    }
+    // Check if world 2 is unlocked via progress
+    if (maxWorld >= 2 || progress['10']) return Math.min(6, maxWorld);
+    // Check world progress array
+    var wProg = this.get('worldProgress') || [true, false, false, false, false, false];
+    for (var w = 5; w >= 0; w--) {
+      if (wProg[w]) return w + 1;
+    }
+    return 1;
+  },
+
+  /** Get social gift notification count */
+  getGiftNotifyCount() {
+    var social = this.get('social');
+    if (!social || !social.gifts) return 0;
+    var count = 0;
+    for (var botId in social.gifts) {
+      if (social.gifts[botId] && social.gifts[botId].length) {
+        count += social.gifts[botId].length;
+      }
+    }
+    return count;
+  },
+
 
   /* ---- Progress ---- */
   getLevelStars(levelId) {

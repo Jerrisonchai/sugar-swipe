@@ -10,9 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/main.css?v=13">
-<link rel="stylesheet" href="css/animations.css?v=13">
-<link rel="stylesheet" href="css/candy-designs.css?v=13">
+<link rel="stylesheet" href="css/main.css?v=14">
+<link rel="stylesheet" href="css/animations.css?v=14">
+<link rel="stylesheet" href="css/candy-designs.css?v=14">
 </head>
 <body>
 
@@ -25,7 +25,10 @@
       <p class="map-sub"> ❤️ <span id="map-lives">5</span> &nbsp;|&nbsp; 🪙 <span id="map-coins">0</span> &nbsp;|&nbsp; 💰 <span id="map-goldbars">0</span></p>
       <button id="btn-open-shop" class="btn--shop-entry">🛒 Shop</button>
       &nbsp;
-      <button id="btn-open-social" class="btn--social-entry">👥 Friends</button>
+      <button id="btn-open-social" class="btn--social-entry">
+        👥 Friends
+        <span id="social-btn-badge" class="nav-badge" style="display:none;"></span>
+      </button>
     </div>
     <div id="world-list" class="world-list"></div>
   </div>
@@ -174,9 +177,18 @@
 
     <!-- Social Tab Bar -->
     <div class="social-tabs">
-      <button class="social-tab active" data-tab="feed">📰 Feed</button>
-      <button class="social-tab" data-tab="friends">🤖 Friends</button>
-      <button class="social-tab" data-tab="leaderboard">🏆 Board</button>
+      <button class="social-tab" data-tab="feed">
+        <span class="social-tab-icon">📰</span>
+        <span class="social-tab-label">Feed <span id="feed-tab-badge" class="nav-badge inline-badge" style="display:none;"></span></span>
+      </button>
+      <button class="social-tab" data-tab="friends">
+        <span class="social-tab-icon">🤖</span>
+        <span class="social-tab-label">Friends</span>
+      </button>
+      <button class="social-tab active" data-tab="board">
+        <span class="social-tab-icon">🏆</span>
+        <span class="social-tab-label">Board</span>
+      </button>
     </div>
 
     <!-- Friend Feed Section -->
@@ -256,19 +268,19 @@
 
 </div>
 
-<script src="js/storage.js?v=13"></script>
-<script src="js/scoring.js?v=13"></script>
-<script src="js/levels.js?v=13"></script>
-<script src="js/board.js?v=13"></script>
-<script src="js/match-engine.js?v=13"></script>
-<script src="js/special.js?v=13"></script>
-<script src="js/obstacles.js?v=13"></script>
-<script src="js/audio.js?v=13"></script>
-<script src="js/cascade.js?v=13"></script>
-<script src="js/input.js?v=13"></script>
-<script src="js/ui.js?v=13"></script>
-<script src="js/shop.js?v=13"></script>
-<script src="js/social.js?v=13"></script>
-<script src="js/main.js?v=13"></script>
+<script src="js/storage.js?v=14"></script>
+<script src="js/scoring.js?v=14"></script>
+<script src="js/levels.js?v=14"></script>
+<script src="js/board.js?v=14"></script>
+<script src="js/match-engine.js?v=14"></script>
+<script src="js/special.js?v=14"></script>
+<script src="js/obstacles.js?v=14"></script>
+<script src="js/audio.js?v=14"></script>
+<script src="js/cascade.js?v=14"></script>
+<script src="js/input.js?v=14"></script>
+<script src="js/ui.js?v=14"></script>
+<script src="js/shop.js?v=14"></script>
+<script src="js/social.js?v=14"></script>
+<script src="js/main.js?v=14"></script>
 </body>
 </html>
