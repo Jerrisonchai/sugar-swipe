@@ -73,5 +73,79 @@
               inset 0 -3px 6px rgba(0,0,0,0.2);
 }
 
-/* ===== SPECIAL CANDY PLACEHOLDERS (Phase 2) ===== */
-/* Striped, Wrapped, Color Bomb designs will be added in Phase 2 */
+/* ===== SPECIAL CANDY DESIGNS ===== */
+
+/* Striped — horizontal white bands overlay */
+.candy--striped-h {
+  background-image: linear-gradient(
+      135deg, transparent 0%, transparent 100%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 14%,
+      rgba(255,255,255,0.45) 14%,
+      rgba(255,255,255,0.45) 28%
+    );
+}
+
+/* Striped — vertical white bands overlay */
+.candy--striped-v {
+  background-image: linear-gradient(
+      135deg, transparent 0%, transparent 100%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 14%,
+      rgba(255,255,255,0.45) 14%,
+      rgba(255,255,255,0.45) 28%
+    );
+}
+
+/* Wrapped — golden outer ring + spinning inner ring */
+.candy--wrapped {
+  box-shadow: 0 0 0 3px rgba(255,215,0,0.9),
+              0 0 15px rgba(255,215,0,0.55),
+              0 2px 8px rgba(0,0,0,0.3),
+              inset 0 2px 4px rgba(255,255,255,0.3),
+              inset 0 -3px 6px rgba(0,0,0,0.2);
+  animation: wrappedPulse 1.5s ease-in-out infinite;
+}
+
+.candy--wrapped::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255,215,0,0.5);
+  pointer-events: none;
+  z-index: 1;
+  animation: wrappedSpin 5s linear infinite;
+}
+
+/* Color Bomb — rainbow disco spinner */
+.candy--bomb {
+  background: conic-gradient(
+    #ff6b6b, #ffa502, #ffd32a, #7bed9f, #70a1ff, #a55eea, #ff6b6b
+  ) !important;
+  box-shadow: 0 0 0 3px rgba(255,215,0,0.6),
+              0 0 20px rgba(255,255,255,0.4),
+              0 2px 8px rgba(0,0,0,0.3) !important;
+  animation: bombSpin 3s linear infinite,
+             bombPulse 1s ease-in-out infinite;
+}
+
+.candy--bomb::after {
+  content: '\2605';
+  position: absolute;
+  inset: 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffd700;
+  font-size: 1em;
+  text-shadow: 0 0 6px rgba(0,0,0,0.5);
+  z-index: 1;
+  animation: bombPulse 1s ease-in-out infinite;
+}
