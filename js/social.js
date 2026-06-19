@@ -60,7 +60,8 @@ const Social = {
   /** ---- Bot Score Simulation ---- */
   getBotScore(botId) {
     var data = this._getSocialData();
-    var lb = data.leaderboard || {};
+    if (!data.leaderboard) data.leaderboard = {};
+    var lb = data.leaderboard;
     if (!lb[botId]) {
       lb[botId] = { weekly: 0, allTime: 0, weeklyStars: 0, allTimeStars: 0, lastUpdated: 0 };
     }
@@ -70,7 +71,8 @@ const Social = {
   /** Update bot scores when player completes a level */
   onPlayerLevelComplete(playerScore, playerStars, levelId) {
     var data = this._getSocialData();
-    var lb = data.leaderboard || {};
+    if (!data.leaderboard) data.leaderboard = {};
+    var lb = data.leaderboard;
 
     // Calculate player's average/best for bot scaling
     var playerTotal = 0, playerCount = 0;
@@ -256,18 +258,21 @@ const Social = {
   getLeaderboard(period) {
     // period = 'weekly' | 'allTime'
     var data = this._getSocialData();
-    var lb = data.leaderboard || {};
+    if (!data.leaderboard) data.leaderboard = {};
+    var lb = data.leaderboard;
     var Storage = window._SS.Storage;
 
     // Get player stats
     var playerWeeklyScore = 0, playerAllTimeScore = 0, playerWeeklyStars = 0, playerAllTimeStars = 0;
+    var levelsCompleted = 0;
     var progress = Storage.get('progress') || {};
     var highscores = Storage.get('highscores') || {};
 
     for (var key in progress) {
       if (progress[key] > 0) {
         playerAllTimeStars += progress[key];
-        playerWeeklyStars += progress[key]; // same for now (local only)
+        playerWeeklyStars += progress[key];
+        levelsCompleted++;
       }
     }
     for (var key in highscores) {
@@ -275,18 +280,29 @@ const Social = {
       playerWeeklyScore += highscores[key];
     }
 
+    // Determine current world
+    var unlockedWorld = Storage.getUnlockedWorld();
+    var worldNames = ['', 'Candy Meadow', 'Frosted Peaks', 'Chocolate Swamp', 'Licorice Lab', 'Marmalade Manor', 'Rainbow Summit'];
+    var currentWorld = worldNames[Math.min(unlockedWorld, 6)] || 'Candy Meadow';
+    var totalLevels = 60;
+
     var entries = [{
       id: 'player',
       name: 'You',
       emoji: '👤',
       score: period === 'weekly' ? playerWeeklyScore : playerAllTimeScore,
       stars: period === 'weekly' ? playerWeeklyStars : playerAllTimeStars,
+      world: currentWorld,
+      levelsCompleted: levelsCompleted,
+      totalLevels: totalLevels,
       isPlayer: true,
     }];
 
     for (var i = 0; i < this.BOTS.length; i++) {
       var bot = this.BOTS[i];
-      var botData = lb[bot.id] || { weekly: 0, allTime: 0, weeklyStars: 0, allTimeStars: 0 };
+      if (!lb[bot.id]) lb[bot.id] = { weekly: 0, allTime: 0, weeklyStars: 0, allTimeStars: 0 };
+      var botData = lb[bot.id];
+
       // If first time, seed with some scores
       if (botData.allTime === 0) {
         var seedScore = 5000 + Math.floor(Math.random() * 20000);
@@ -294,15 +310,26 @@ const Social = {
         botData.allTimeStars = Math.floor(seedScore / 2000);
         botData.weekly = Math.floor(seedScore * 0.3);
         botData.weeklyStars = Math.floor(botData.allTimeStars * 0.3);
-        if (!lb[bot.id]) lb[bot.id] = botData;
       }
+
+      // Calculate bot world based on stars
+      var botStars = period === 'weekly' ? botData.weeklyStars : botData.allTimeStars;
+      var botWorld = worldNames[1]; // default world 1
+      var thresholds = [0, 0, 10, 20, 30, 40, 50]; // cumulative stars to reach each world
+      for (var w = 1; w <= 6; w++) {
+        if (botStars >= thresholds[w]) botWorld = worldNames[w];
+      }
+      var botLevels = Math.min(totalLevels, Math.floor(botStars / 1.5));
 
       entries.push({
         id: bot.id,
         name: bot.name,
         emoji: bot.emoji,
         score: period === 'weekly' ? botData.weekly : botData.allTime,
-        stars: period === 'weekly' ? botData.weeklyStars : botData.allTimeStars,
+        stars: botStars,
+        world: botWorld,
+        levelsCompleted: Math.max(1, botLevels),
+        totalLevels: totalLevels,
         isPlayer: false,
       });
     }

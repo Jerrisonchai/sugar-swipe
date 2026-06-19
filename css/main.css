@@ -955,6 +955,33 @@ html, body {
   text-align: center;
 }
 
+/* Social Tab Bar */
+.social-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px;
+  margin-bottom: 8px;
+}
+
+.social-tab {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-secondary);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+.social-tab.active {
+  border-color: #70a1ff;
+  background: linear-gradient(135deg, rgba(112,161,255,0.2), rgba(30,144,255,0.1));
+  color: #70a1ff;
+}
+
 .social-title {
   font-family: var(--font-heading);
   font-size: clamp(24px, 6vw, 32px);
@@ -1213,6 +1240,13 @@ html, body {
 .lb-stars {
   font-size: 11px;
   color: var(--gold-solid);
+}
+
+.lb-detail {
+  display: block;
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.4;
 }
 
 .lb-score {

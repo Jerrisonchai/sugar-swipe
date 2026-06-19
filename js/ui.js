@@ -707,6 +707,7 @@ const UI = {
     }
 
     modal.classList.add('active');
+    if (window._SS.AudioFX) window._SS.AudioFX.purchase();
 
     var self = this;
     confirmBtn.onclick = function() {
@@ -733,6 +734,7 @@ const UI = {
     var name = item.name || '';
     desc.textContent = name + ' added to your account!';
     modal.classList.add('active');
+    if (window._SS.AudioFX) window._SS.AudioFX.purchaseSuccess();
     this._updateShopBalance();
     // Re-render current tab
     this._renderShopTab(this._currentShopTab);
@@ -749,10 +751,26 @@ const UI = {
     var Social = window._SS.Social;
     Social.checkWeeklyReset();
     this._renderGiftBanner();
-    this._renderFeed();
-    this._renderBots();
-    this._renderLeaderboard('weekly');
+    this._switchSocialTab('feed');
     this._bindSocialTabs();
+  },
+
+  _switchSocialTab(tab) {
+    // Update tab buttons
+    document.querySelectorAll('.social-tab').forEach(function(t) {
+      t.classList.toggle('active', t.dataset.tab === tab);
+    });
+    // Show/hide sections
+    var feedSection = document.getElementById('social-feed-section');
+    var friendsSection = document.getElementById('social-friends-section');
+    var lbSection = document.getElementById('social-lb-section');
+    if (feedSection) feedSection.style.display = tab === 'feed' ? 'block' : 'none';
+    if (friendsSection) friendsSection.style.display = tab === 'friends' ? 'block' : 'none';
+    if (lbSection) lbSection.style.display = tab === 'leaderboard' ? 'block' : 'none';
+
+    if (tab === 'feed') this._renderFeed();
+    if (tab === 'friends') this._renderBots();
+    if (tab === 'leaderboard') this._renderLeaderboard('weekly');
   },
 
   _renderGiftBanner() {
@@ -877,9 +895,11 @@ const UI = {
       html += '<span class="lb-avatar">' + e.emoji + '</span>';
       html += '<div class="lb-info">';
       html += '<span class="lb-name">' + e.name + '</span>';
-      html += '<span class="lb-stars">⭐ ' + e.stars.toLocaleString() + ' stars</span>';
+      html += '<span class="lb-detail">🌍 ' + (e.world || '?') + '</span>';
+      html += '<span class="lb-detail">📊 ' + (e.levelsCompleted || 0) + '/' + (e.totalLevels || 60) + ' levels</span>';
+      html += '<span class="lb-stars">⭐ ' + (e.stars || 0).toLocaleString() + ' stars</span>';
       html += '</div>';
-      html += '<span class="lb-score">' + e.score.toLocaleString() + ' pts</span>';
+      html += '<span class="lb-score">' + (e.score || 0).toLocaleString() + ' pts</span>';
       html += '</div>';
     }
     container.innerHTML = html;
@@ -887,6 +907,14 @@ const UI = {
 
   _bindSocialTabs() {
     var self = this;
+    // Social main tabs (Feed / Friends / Leaderboard)
+    document.querySelectorAll('.social-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        if (window._SS.AudioFX) window._SS.AudioFX.buttonTap();
+        self._switchSocialTab(tab.dataset.tab);
+      });
+    });
+    // Leaderboard sub-tabs (Weekly / All Time)
     document.querySelectorAll('.lb-tab').forEach(function(tab) {
       tab.addEventListener('click', function() {
         document.querySelectorAll('.lb-tab').forEach(function(t) { t.classList.remove('active'); });

@@ -227,6 +227,46 @@ const AudioFX = {
     });
   },
 
+  /** Cash register ka-ching for purchases */
+  purchase() {
+    this._play(t => {
+      const dur = 0.08;
+      const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+      const src = this.ctx.createBufferSource();
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+      src.buffer = buf;
+      filter.type = 'highpass';
+      filter.frequency.value = 2000;
+      gain.gain.setValueAtTime(this._volume * 0.15, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      src.connect(filter).connect(gain).connect(this.ctx.destination);
+      src.start(t); src.stop(t + dur);
+    });
+  },
+
+  /** Sparkly success jingle for purchase confirm */
+  purchaseSuccess() {
+    var notes = [523, 659, 784, 1047];
+    var self = this;
+    notes.forEach(function(freq, i) {
+      self._play(function(t) {
+        var start = t + i * 0.07;
+        var osc = self.ctx.createOscillator();
+        var gain = self.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(self._volume * 0.18, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+        osc.connect(gain).connect(self.ctx.destination);
+        osc.start(start); osc.stop(start + 0.25);
+      });
+    });
+  },
+
   /* ---- Internals ---- */
   _play(fn) {
     if (!this.enabled || !this.ctx) return;
