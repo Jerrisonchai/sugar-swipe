@@ -188,8 +188,8 @@ const EventManager = {
   claimStreak() {
     var d = this._getData();
     var today = new Date().toDateString();
-    var s = d.streak;
-    if (!s) { s = { current: 1, lastClaimDate: '', claimed: {} }; d.streak = s; }
+    // Use getStreak() to get properly initialized streak data
+    var s = this.getStreak();
 
     if (s.lastClaimDate === today) return null; // already claimed today
     if (s.claimed[s.current]) return null; // current day already claimed

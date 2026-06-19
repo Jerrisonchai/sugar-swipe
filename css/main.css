@@ -1437,18 +1437,23 @@ html, body {
 
 /* Events entry button (world map header) */
 .btn--events-entry {
-  padding: 6px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,165,0,0.3);
-  background: linear-gradient(135deg, rgba(255,165,0,0.15), rgba(255,215,0,0.08));
-  color: var(--gold-solid);
-  font-family: var(--font-heading);
-  font-size: 13px;
-  cursor: pointer;
+  display: inline-block;
   position: relative;
-  white-space: nowrap;
+  margin-top: 8px;
+  padding: 8px 24px;
+  border-radius: 20px;
+  border: 2px solid #ff9500;
+  background: linear-gradient(135deg, rgba(255,149,0,0.15), rgba(255,170,0,0.08));
+  color: #ff9500;
+  font-family: var(--font-heading);
+  font-size: clamp(14px, 3.5vw, 16px);
+  cursor: pointer;
+  transition: all 0.2s;
 }
-.btn--events-entry:active { opacity: 0.8; }
+.btn--events-entry:active {
+  transform: scale(0.95);
+  background: rgba(255,149,0,0.2);
+}
 
 /* Events panel */
 .events-panel {

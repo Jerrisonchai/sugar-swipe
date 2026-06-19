@@ -1033,7 +1033,7 @@ const UI = {
 
     // Close button
     var closeBtn = document.getElementById('btn-close-events');
-    if (closeBtn) closeBtn.onclick = function() { self.hideScreen('events-screen'); };
+    if (closeBtn) closeBtn.onclick = function() { self.showScreen('world-map'); self._updateEventBadge(); };
 
     // Spin button
     document.getElementById('btn-spin').onclick = function() {
