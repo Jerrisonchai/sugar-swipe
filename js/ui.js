@@ -1183,8 +1183,10 @@ const UI = {
   _renderChallenges() {
     var list = document.getElementById('challenge-list');
     if (!list) return;
+    try {
     var EM = window._SS.EventManager;
     var ch = EM.getChallenges();
+    if (!ch || !ch.items) { list.innerHTML = '<p class="spin-status">Loading challenges...</p>'; return; }
     var html = '';
     for (var i = 0; i < ch.items.length; i++) {
       var item = ch.items[i];
@@ -1214,6 +1216,7 @@ const UI = {
       html += '</div>';
     }
     list.innerHTML = html;
+    } catch(e) { list.innerHTML = '<p class="spin-status">No challenges available</p>'; }
   },
 
   _renderStreaks() {

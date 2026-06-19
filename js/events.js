@@ -99,7 +99,7 @@ const EventManager = {
   getChallenges() {
     var d = this._getData();
     var mon = this._getWeekMonday();
-    if (!d.challenges.week || d.challenges.week !== mon) {
+    if (!d.challenges || !d.challenges.week || d.challenges.week !== mon) {
       // New week — reset weekly totals + pick 3 new challenges
       d.weeklyTotals = { stars: 0, score: 0, candies: 0, levels: 0, worlds2plus: 0, specials: 0, obstacles: 0, boosters: 0 };
       var pool = this.CHALLENGE_POOL.slice();
@@ -129,8 +129,9 @@ const EventManager = {
   /** Record a level completion into weekly accumulator + challenge progress */
   recordLevelComplete(result) {
     if (!result) return;
-    var d = this._getData();
+    try {
     this.getChallenges(); // ensure week + weeklyTotals init
+    var d = this._getData(); // re-fetch after getChallenges (which may have saved)
     if (!d.weeklyTotals) d.weeklyTotals = { stars: 0, score: 0, candies: 0, levels: 0, worlds2plus: 0, specials: 0, obstacles: 0, boosters: 0 };
 
     // Accumulate weekly totals
@@ -168,6 +169,7 @@ const EventManager = {
     }
     d.challenges = ch;
     this._saveData(d);
+    } catch(e) { console.warn('recordLevelComplete failed:', e); }
   },
 
   /** Track booster usage (separate from level complete) */
@@ -207,10 +209,13 @@ const EventManager = {
 
   /** Check if any challenge is completable (for badge) */
   hasCompletableChallenge() {
-    var ch = this.getChallenges();
-    for (var i = 0; i < ch.items.length; i++) {
-      if (!ch.claimed[i] && (ch.progress[i] || 0) >= ch.items[i].target) return true;
-    }
+    try {
+      var ch = this.getChallenges();
+      if (!ch || !ch.items) return false;
+      for (var i = 0; i < ch.items.length; i++) {
+        if (!ch.claimed[i] && (ch.progress[i] || 0) >= ch.items[i].target) return true;
+      }
+    } catch(e) { return false; }
     return false;
   },
 
