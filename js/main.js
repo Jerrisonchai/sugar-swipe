@@ -47,6 +47,9 @@ window._SS = window._SS || {};
     state.hammerMode = false;
     state.extraMovesUsed = 0;
     state.levelStarted = true;
+    state.candiesMatched = 0;
+    state.specialsCreated = 0;
+    state.obstaclesCleared = 0;
 
     Board.init(level.rows, level.cols);
     deactivateAllBoosters();
@@ -298,11 +301,12 @@ window._SS = window._SS || {};
       if (comboText) UI.showCombo(comboText);
 
       state.phase = 'MATCHING';
-    window._SS.EventManager.trackProgress('boostersUsed', 1);
       await UI.animateMatches(expandedCells);
       Board.removeCells(expandedCells);
+      state.candiesMatched += expandedCells.length;
 
       const destroyed = Obstacles.damageFromMatches(Board, expandedCells);
+      state.obstaclesCleared += destroyed.length;
       for (const d of destroyed) UI.showIceBreak(d.row, d.col);
       if (state.jellyLeft > 0) {
         const cleared = Obstacles.clearJellyFromMatches(Board, expandedCells);
@@ -315,6 +319,7 @@ window._SS = window._SS || {};
           type: CANDY_TYPES[Math.floor(Math.random() * CANDY_TYPES.length)],
           special: sp.type
         });
+        state.specialsCreated++;
       }
 
       state.phase = 'CASCADING';
@@ -471,7 +476,13 @@ window._SS = window._SS || {};
 
       await UI._sleep(400);
       UI.showLevelComplete(stars, state.score);
-      trackEventProgress({ stars: stars, score: state.score, world: state.level ? state.level.world : 1 });
+      trackEventProgress({
+        stars: stars, score: state.score,
+        world: state.level ? state.level.world : 1,
+        obstaclesCleared: state.obstaclesCleared || 0,
+        candiesMatched: state.candiesMatched || 0,
+        specialsCreated: state.specialsCreated || 0
+      });
       state.levelStarted = false;
 
       document.getElementById('btn-next-level').onclick = () => {
@@ -734,6 +745,14 @@ window._SS = window._SS || {};
     EM.trackProgress('totalScore', levelResult.score || 0);
     // Track: candiesMatched
     EM.trackProgress('candiesMatched', levelResult.candiesMatched || 0);
+    // Track: obstacles
+    EM.trackProgress('obstaclesCleared', levelResult.obstaclesCleared || 0);
+    // Track: ice (same as obstacles in this version)
+    EM.trackProgress('iceCleared', levelResult.obstaclesCleared || 0);
+    // Track: jelly
+    EM.trackProgress('jellyCleared', levelResult.obstaclesCleared || 0);
+    // Track: specials
+    EM.trackProgress('specialsCreated', levelResult.specialsCreated || 0);
     // Track: worlds 2+
     if (levelResult.world >= 2) EM.trackProgress('world2plusLevels', 1);
     // Refresh event badge

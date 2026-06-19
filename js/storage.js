@@ -76,14 +76,36 @@ const Storage = {
     }
   },
 
+  /** Compute & persist unlocked world from progress */
   getUnlockedWorld() {
-    return this.get('unlocked_world') || 1;
+    var progress = this.get('progress') || {};
+    var maxWorld = 1;
+    for (var key in progress) {
+      if (progress[key] > 0) {
+        var lvl = parseInt(key, 10);
+        if (!isNaN(lvl)) {
+          var world = Math.ceil(lvl / 10);
+          if (world > maxWorld) maxWorld = world;
+        }
+      }
+    }
+    var saved = this.get('unlocked_world') || 1;
+    return Math.max(maxWorld, saved);
   },
 
   setUnlockedWorld(world) {
-    if (world > this.getUnlockedWorld()) {
+    if (world > this.get('unlocked_world') || 0) {
       this.set('unlocked_world', world);
     }
+  },
+
+  /** Whether a specific level is unlocked (linear progression within world) */
+  isLevelUnlocked(levelId) {
+    var progress = this.get('progress') || {};
+    // Level 1 is always unlocked
+    if (levelId <= 1) return true;
+    // Check if previous level has any stars
+    return (progress[levelId - 1] || 0) > 0;
   },
 
   /* ---- Score ---- */

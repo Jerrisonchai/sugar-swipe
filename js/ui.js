@@ -449,8 +449,7 @@ const UI = {
     for (var i = 0; i < world.levels.length; i++) {
       var lid = world.levels[i];
       var stars = Storage.getLevelStars(lid);
-      var prevCompleted = i === 0 || Storage.getLevelStars(world.levels[i - 1]) > 0;
-      var locked = !prevCompleted && i > 0;
+      var locked = !Storage.isLevelUnlocked(lid);
       if (locked) {
         html += '<div class="level-btn level-btn--locked"><div class="level-btn-num">' + lid + '</div><div class="level-btn-stars">🔒</div></div>';
       } else {
