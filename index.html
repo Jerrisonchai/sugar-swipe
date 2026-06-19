@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, target-densitydpi=device-dpi">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1a0a2e">
@@ -10,9 +10,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/main.css?v=27">
-<link rel="stylesheet" href="css/animations.css?v=27">
-<link rel="stylesheet" href="css/candy-designs.css?v=27">
+<link rel="stylesheet" href="css/main.css?v=28">
+  <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/animations.css?v=28">
+<link rel="stylesheet" href="css/candy-designs.css?v=28">
 </head>
 <body>
 
@@ -336,24 +337,26 @@
 
 </div>
 
-<script src="js/storage.js?v=27"></script>
-<script src="js/scoring.js?v=27"></script>
-<script src="js/levels.js?v=27"></script>
-<script src="js/board.js?v=27"></script>
-<script src="js/match-engine.js?v=27"></script>
-<script src="js/special.js?v=27"></script>
-<script src="js/obstacles.js?v=27"></script>
-<script src="js/audio.js?v=27"></script>
-<script src="js/cascade.js?v=27"></script>
-<script src="js/input.js?v=27"></script>
-<script src="js/ui.js?v=27"></script>
-<script src="js/shop.js?v=27"></script>
-<script src="js/social.js?v=27"></script>
-<script src="js/events.js?v=27"></script>
-<script src="js/main.js?v=27"></script>
+<script src="js/storage.js?v=28"></script>
+<script src="js/scoring.js?v=28"></script>
+<script src="js/levels.js?v=28"></script>
+<script src="js/board.js?v=28"></script>
+<script src="js/match-engine.js?v=28"></script>
+<script src="js/special.js?v=28"></script>
+<script src="js/obstacles.js?v=28"></script>
+<script src="js/audio.js?v=28"></script>
+<script src="js/cascade.js?v=28"></script>
+<script src="js/input.js?v=28"></script>
+<script src="js/ui.js?v=28"></script>
+<script src="js/shop.js?v=28"></script>
+<script src="js/social.js?v=28"></script>
+<script src="js/events.js?v=28"></script>
+<script src="js/main.js?v=28"></script>
 <script>
 // Safety check: reset corrupted events data from pre-Phase 9
 (function(){try{var e=localStorage.getItem('ss_events');if(e){var d=JSON.parse(e);if(!d.challenges||!d.challenges.items){console.log('Events data migrated to Phase 9 format');localStorage.setItem('ss_events',JSON.stringify({lastSpinDate:d.lastSpinDate||'',streak:d.streak||{current:1,lastClaimDate:'',claimed:{}},challenges:{}}));}}}catch(ex){}})();
+// Register service worker for PWA offline support
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 </script>
 </body>
 </html>
