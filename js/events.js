@@ -100,9 +100,9 @@ const EventManager = {
     var d = this._getData();
     var mon = this._getWeekMonday();
     if (!d.challenges.week || d.challenges.week !== mon) {
-      // New week — pick 3 random challenges
+      // New week — reset weekly totals + pick 3 new challenges
+      d.weeklyTotals = { stars: 0, score: 0, candies: 0, levels: 0, worlds2plus: 0, specials: 0, obstacles: 0, boosters: 0 };
       var pool = this.CHALLENGE_POOL.slice();
-      // Shuffle
       for (var i = pool.length - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
         var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
@@ -115,22 +115,77 @@ const EventManager = {
       };
       this._saveData(d);
     }
+    if (!d.weeklyTotals) d.weeklyTotals = { stars: 0, score: 0, candies: 0, levels: 0, worlds2plus: 0, specials: 0, obstacles: 0, boosters: 0 };
     return d.challenges;
   },
 
-  /** Update challenge progress (called from main.js after each level) */
-  trackProgress(trackType, amount) {
-    var ch = this.getChallenges();
-    amount = amount || 1;
-    var updated = false;
+  /** Get weekly accumulated totals (for leaderboard sync) */
+  getWeeklyTotals() {
+    this.getChallenges(); // ensure week is set
+    var d = this._getData();
+    return d.weeklyTotals || { stars: 0, score: 0, candies: 0, levels: 0, worlds2plus: 0, specials: 0, obstacles: 0, boosters: 0 };
+  },
+
+  /** Record a level completion into weekly accumulator + challenge progress */
+  recordLevelComplete(result) {
+    if (!result) return;
+    var d = this._getData();
+    this.getChallenges(); // ensure week + weeklyTotals init
+    if (!d.weeklyTotals) d.weeklyTotals = { stars: 0, score: 0, candies: 0, levels: 0, worlds2plus: 0, specials: 0, obstacles: 0, boosters: 0 };
+
+    // Accumulate weekly totals
+    d.weeklyTotals.stars += (result.stars || 0);
+    d.weeklyTotals.score += (result.score || 0);
+    d.weeklyTotals.candies += (result.candiesMatched || 0);
+    d.weeklyTotals.levels += 1;
+    d.weeklyTotals.specials += (result.specialsCreated || 0);
+    d.weeklyTotals.obstacles += (result.obstaclesCleared || 0);
+    if ((result.world || 1) >= 2) d.weeklyTotals.worlds2plus += 1;
+
+    this._saveData(d);
+
+    // Now update challenge progress from weekly totals
+    var ch = d.challenges;
+    var totals = d.weeklyTotals;
+    var mapping = {
+      'levelsCompleted': totals.levels,
+      'starsEarned': totals.stars,
+      'specialsCreated': totals.specials,
+      'obstaclesCleared': totals.obstacles,
+      'totalScore': totals.score,
+      'world2plusLevels': totals.worlds2plus,
+      'boostersUsed': totals.boosters,
+      'iceCleared': totals.obstacles,
+      'jellyCleared': totals.obstacles,
+      'candiesMatched': totals.candies,
+    };
+
     for (var i = 0; i < ch.items.length; i++) {
-      if (ch.items[i].track === trackType && !ch.claimed[i]) {
-        ch.progress[i] = Math.min(ch.items[i].target, (ch.progress[i] || 0) + amount);
-        updated = true;
+      var trackType = ch.items[i].track;
+      if (!ch.claimed[i] && mapping[trackType] !== undefined) {
+        ch.progress[i] = Math.min(ch.items[i].target, mapping[trackType]);
       }
     }
-    if (updated) this._saveData(this._getData()); // re-save
-    return ch;
+    d.challenges = ch;
+    this._saveData(d);
+  },
+
+  /** Track booster usage (separate from level complete) */
+  trackBoosterUsed() {
+    var d = this._getData();
+    this.getChallenges();
+    if (!d.weeklyTotals) d.weeklyTotals = { stars: 0, score: 0, candies: 0, levels: 0, worlds2plus: 0, specials: 0, obstacles: 0, boosters: 0 };
+    d.weeklyTotals.boosters += 1;
+    this._saveData(d);
+    // Sync challenge progress
+    var ch = d.challenges;
+    for (var i = 0; i < ch.items.length; i++) {
+      if (ch.items[i].track === 'boostersUsed' && !ch.claimed[i]) {
+        ch.progress[i] = Math.min(ch.items[i].target, d.weeklyTotals.boosters);
+      }
+    }
+    d.challenges = ch;
+    this._saveData(d);
   },
 
   /** Claim a completed challenge */

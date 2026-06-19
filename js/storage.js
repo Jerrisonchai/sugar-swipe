@@ -99,13 +99,36 @@ const Storage = {
     }
   },
 
-  /** Whether a specific level is unlocked (linear progression within world) */
+  /** Whether a specific level is unlocked (strict linear chain — all prior levels must have stars) */
   isLevelUnlocked(levelId) {
-    var progress = this.get('progress') || {};
-    // Level 1 is always unlocked
     if (levelId <= 1) return true;
-    // Check if previous level has any stars
-    return (progress[levelId - 1] || 0) > 0;
+    var progress = this.get('progress') || {};
+    // Verify EVERY level before this one has been completed
+    for (var i = 1; i < levelId; i++) {
+      if ((progress[i] || 0) <= 0) return false;
+    }
+    return true;
+  },
+
+  /** Clean up any orphaned progress entries that break linear progression */
+  sanitizeProgress() {
+    var progress = this.get('progress') || {};
+    var cleaned = {};
+    var maxUnlocked = 0;
+    // Find the highest completed level from 1 upwards
+    for (var i = 1; i <= 60; i++) {
+      if ((progress[i] || 0) > 0) maxUnlocked = i;
+      else break;
+    }
+    // Keep only levels up to maxUnlocked
+    for (var j = 1; j <= maxUnlocked; j++) {
+      cleaned[j] = progress[j] || 0;
+    }
+    if (Object.keys(cleaned).length !== Object.keys(progress).length) {
+      this.set('progress', cleaned);
+      return true; // sanitized
+    }
+    return false;
   },
 
   /* ---- Score ---- */

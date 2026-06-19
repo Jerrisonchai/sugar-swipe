@@ -127,7 +127,7 @@ window._SS = window._SS || {};
     AudioFX.specialActivate();
     UI.showWrappedExplode(r, c); // reuse wrapped VFX for hammer
     state.phase = 'MATCHING';
-    window._SS.EventManager.trackProgress('boostersUsed', 1);
+    window._SS.EventManager.trackBoosterUsed();
     await UI.animateMatches(cells);
     Board.removeCells(cells);
 
@@ -476,8 +476,10 @@ window._SS = window._SS || {};
 
       await UI._sleep(400);
       UI.showLevelComplete(stars, state.score);
-      trackEventProgress({
-        stars: stars, score: state.score,
+      // Record level stats for weekly challenges
+      window._SS.EventManager.recordLevelComplete({
+        stars: stars,
+        score: state.score,
         world: state.level ? state.level.world : 1,
         obstaclesCleared: state.obstaclesCleared || 0,
         candiesMatched: state.candiesMatched || 0,
@@ -733,29 +735,8 @@ window._SS = window._SS || {};
     });
   }
 
-  /** Track event progress after level completion */
-  function trackEventProgress(levelResult) {
-    if (!levelResult) return;
-    var EM = window._SS.EventManager;
-    // Track: levelsCompleted (always +1)
-    EM.trackProgress('levelsCompleted', 1);
-    // Track: starsEarned
-    EM.trackProgress('starsEarned', levelResult.stars || 0);
-    // Track: totalScore
-    EM.trackProgress('totalScore', levelResult.score || 0);
-    // Track: candiesMatched
-    EM.trackProgress('candiesMatched', levelResult.candiesMatched || 0);
-    // Track: obstacles
-    EM.trackProgress('obstaclesCleared', levelResult.obstaclesCleared || 0);
-    // Track: ice (same as obstacles in this version)
-    EM.trackProgress('iceCleared', levelResult.obstaclesCleared || 0);
-    // Track: jelly
-    EM.trackProgress('jellyCleared', levelResult.obstaclesCleared || 0);
-    // Track: specials
-    EM.trackProgress('specialsCreated', levelResult.specialsCreated || 0);
-    // Track: worlds 2+
-    if (levelResult.world >= 2) EM.trackProgress('world2plusLevels', 1);
-    // Refresh event badge
+  /** Called after level complete to refresh event badge */
+  function refreshEventBadge() {
     if (UI._updateEventBadge) UI._updateEventBadge();
   }
 
@@ -769,7 +750,8 @@ window._SS = window._SS || {};
 
   // ===== INIT =====
   async function init() {
-    setupInput();
+
+    Storage.sanitizeProgress(); // clean up orphaned progress entries    setupInput();
     setupButtons();
     UI.bindSocialNav();
     await Levels.load();
