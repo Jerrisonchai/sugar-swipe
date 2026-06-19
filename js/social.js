@@ -209,7 +209,7 @@ const Social = {
     return { botId: botId, type: gift.type, value: gv };
   },
 
-  /** Send a gift to a bot (costs coins) */
+  /** Send a gift to a bot (costs coins). Player can send to any bot, up to MAX_SEND_PER_DAY total. */
   sendGiftToBot(botId) {
     var data = this._getSocialData();
     var today = new Date().toDateString();
@@ -227,10 +227,11 @@ const Social = {
     for (var i = 0; i < this.BOTS.length; i++) {
       if (this.BOTS[i].id === botId) { bot = this.BOTS[i]; break; }
     }
+    // Bot might send a return gift (30% chance)
     var returned = Math.random() < 0.3;
     if (returned) this._maybeGenerateGifts();
     this._addActivity('player', 'You', '👤', 'sent ' + (bot ? bot.name : 'friend') + ' a gift! ❤️');
-    return { success: true, sentCount: data.sentCount, botReplied: returned };
+    return { success: true, sentCount: data.sentCount, maxPerDay: this.MAX_SEND_PER_DAY, botReplied: returned };
   },
 
   /* ---- Leaderboard ---- */

@@ -857,13 +857,17 @@ const UI = {
   /** Bot profile cards with stories */
   _renderBotProfiles() {
     var Social = window._SS.Social;
+    var Storage = window._SS.Storage;
     var pending = Social.getPendingGifts();
     var pendingMap = {};
     for (var i = 0; i < pending.length; i++) pendingMap[pending[i].botId] = true;
 
     var data = Social._getSocialData();
     var today = new Date().toDateString();
-    var canSend = data.sendDate !== today || (data.sentCount || 0) < Social.MAX_SEND_PER_DAY;
+    var sentSoFar = (data.sendDate === today) ? (data.sentCount || 0) : 0;
+    var remainingSends = Social.MAX_SEND_PER_DAY - sentSoFar;
+    var playerCoins = Storage.getCoins ? Storage.getCoins() : 0;
+    var canSend = remainingSends > 0 && playerCoins >= Social.SEND_GIFT_COST;
 
     var container = document.getElementById('bot-list');
     if (!container) return;
@@ -892,8 +896,15 @@ const UI = {
       if (hasGift) {
         html += '<button class="btn-open-gift" data-bot="' + bot.id + '">🎁 Open Gift</button>';
       }
+      // All 3 bot send buttons are enabled as long as player has remaining sends + coins
       html += '<button class="btn-send-gift" data-bot="' + bot.id + '"' + (!canSend ? ' disabled' : '') + '>';
-      html += '🎁 Send Gift ' + (canSend ? '(' + (Social.MAX_SEND_PER_DAY - (data.sentCount || 0)) + ' left)' : '(Max Today)');
+      if (remainingSends <= 0) {
+        html += '🎁 Max Today';
+      } else if (playerCoins < Social.SEND_GIFT_COST) {
+        html += '🎁 Need ' + Social.SEND_GIFT_COST + ' 🪙';
+      } else {
+        html += '🎁 Send Gift (' + remainingSends + ' left, ' + Social.SEND_GIFT_COST + '🪙)';
+      }
       html += '</button>';
       html += '</div>';
       html += '</div>';
@@ -914,7 +925,7 @@ const UI = {
         self._renderFeed();
       });
     });
-    // Send gift
+    // Send gift — all 3 bots always bind (player can send to same bot 3x)
     container.querySelectorAll('.btn-send-gift:not([disabled])').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var AudioFX = window._SS.AudioFX;
