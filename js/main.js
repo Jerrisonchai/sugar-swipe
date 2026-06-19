@@ -406,6 +406,54 @@ window._SS = window._SS || {};
       UI.hidePause();
       gotoWorldMap();
     });
+
+    // Admin debug toggle
+    setupAdminToggle();
+  }
+
+  function setupAdminToggle() {
+    const btn = document.getElementById('btn-admin');
+    if (!btn) return;
+
+    btn.addEventListener('click', () => {
+      const active = btn.classList.contains('active');
+      if (active) {
+        // Restore original progress
+        const save = Storage.get('admin_save');
+        if (save) {
+          Storage.set('progress', save.progress || {});
+          Storage.set('unlocked_world', save.unlocked_world || 1);
+          Storage.remove('admin_save');
+        }
+        btn.classList.remove('active');
+        btn.title = 'Admin Mode';
+      } else {
+        // Save current state and unlock everything
+        const currentProgress = Storage.get('progress') || {};
+        const currentUnlocked = Storage.getUnlockedWorld();
+        Storage.set('admin_save', {
+          progress: JSON.parse(JSON.stringify(currentProgress)),
+          unlocked_world: currentUnlocked
+        });
+        // Unlock all 60 levels with 3 stars each
+        const adminProgress = {};
+        for (let i = 1; i <= 60; i++) {
+          adminProgress[i] = 3;
+        }
+        Storage.set('progress', adminProgress);
+        Storage.setUnlockedWorld(6);
+        btn.classList.add('active');
+        btn.title = 'Admin Mode ON — click to restore';
+      }
+      // Refresh current screen
+      if (document.getElementById('world-map').classList.contains('active')) {
+        UI.showWorldMap();
+      } else if (document.getElementById('level-grid').classList.contains('active')) {
+        const gridTitle = document.getElementById('grid-world-name');
+        const world = UI.WORLD_DATA.find(w => w.name === gridTitle.textContent);
+        if (world) UI.showLevelGrid(world.id);
+      }
+    });
   }
 
   function gotoWorldMap() {

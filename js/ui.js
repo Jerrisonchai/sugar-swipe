@@ -390,10 +390,10 @@ const UI = {
   WORLD_DATA: [
     { id: 1, name: 'Candy Meadow', bg: 'linear-gradient(135deg, #a8e6cf 0%, #7bed9f 100%)', gridBg: 'linear-gradient(180deg, #1a2a1a 0%, #0d1f0d 100%)', quote: 'Where sweetness blooms in every row.', levels: [1,2,3,4,5,6,7,8,9,10] },
     { id: 2, name: 'Frosted Peaks', bg: 'linear-gradient(135deg, #b8dff0 0%, #5b9bd5 100%)', gridBg: 'linear-gradient(180deg, #0f1a2e 0%, #0a1020 100%)', quote: 'The cold never bothered this candy.', levels: [11,12,13,14,15,16,17,18,19,20] },
-    { id: 3, name: 'Chocolate Swamp', bg: 'linear-gradient(135deg, #6b4226 0%, #a0522d 100%)', gridBg: 'linear-gradient(180deg, #1a120c 0%, #0d0906 100%)', quote: 'Muddy waters hide sugary secrets.', levels: [], locked: true },
-    { id: 4, name: 'Licorice Lab', bg: 'linear-gradient(135deg, #2d1b69 0%, #6b3fa0 100%)', gridBg: 'linear-gradient(180deg, #141024 0%, #0a0816 100%)', quote: 'Twisted experiments in sugar chemistry.', levels: [], locked: true },
-    { id: 5, name: 'Marmalade Manor', bg: 'linear-gradient(135deg, #ff6348 0%, #ffa502 100%)', gridBg: 'linear-gradient(180deg, #1f0f08 0%, #120803 100%)', quote: 'A sticky estate of citrus delights.', levels: [], locked: true },
-    { id: 6, name: 'Rainbow Summit', bg: 'linear-gradient(135deg, #667eea 0%, #a55eea 100%)', gridBg: 'linear-gradient(180deg, #141428 0%, #0c0c1a 100%)', quote: 'At the peak, every color shines as one.', levels: [], locked: true },
+    { id: 3, name: 'Chocolate Swamp', bg: 'linear-gradient(135deg, #6b4226 0%, #a0522d 100%)', gridBg: 'linear-gradient(180deg, #1a120c 0%, #0d0906 100%)', quote: 'Muddy waters hide sugary secrets.', levels: [21,22,23,24,25,26,27,28,29,30] },
+    { id: 4, name: 'Licorice Lab', bg: 'linear-gradient(135deg, #2d1b69 0%, #6b3fa0 100%)', gridBg: 'linear-gradient(180deg, #141024 0%, #0a0816 100%)', quote: 'Twisted experiments in sugar chemistry.', levels: [31,32,33,34,35,36,37,38,39,40] },
+    { id: 5, name: 'Marmalade Manor', bg: 'linear-gradient(135deg, #ff6348 0%, #ffa502 100%)', gridBg: 'linear-gradient(180deg, #1f0f08 0%, #120803 100%)', quote: 'A sticky estate of citrus delights.', levels: [41,42,43,44,45,46,47,48,49,50] },
+    { id: 6, name: 'Rainbow Summit', bg: 'linear-gradient(135deg, #667eea 0%, #a55eea 100%)', gridBg: 'linear-gradient(180deg, #141428 0%, #0c0c1a 100%)', quote: 'At the peak, every color shines as one.', levels: [51,52,53,54,55,56,57,58,59,60] },
   ],
 
   showWorldMap() {
@@ -412,7 +412,7 @@ const UI = {
         starsEarned += Storage.getLevelStars(w.levels[j]);
       }
       var maxStars = totalLevels * 3;
-      if (w.locked || !unlocked) {
+      if (!unlocked) {
         html += '<div class="world-card world-card--locked" style="background:' + w.bg + '"><div class="world-card-name">' + w.name + '</div><div class="world-card-stars">Coming Soon</div><div class="world-card-lock">🔒</div></div>';
       } else {
         html += '<div class="world-card" style="background:' + w.bg + '" data-world="' + w.id + '"><div class="world-card-name">' + w.name + '</div><div class="world-card-stars">⭐ ' + starsEarned + '/' + maxStars + '</div></div>';

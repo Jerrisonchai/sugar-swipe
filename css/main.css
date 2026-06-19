@@ -506,6 +506,38 @@ html, body {
   stroke-linejoin: round;
 }
 
+/* ===== ADMIN DEBUG BUTTON (testing only) ===== */
+.btn--admin {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 16px) + 12px);
+  right: 16px;
+  z-index: 200;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.3);
+  color: rgba(255,255,255,0.35);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn--admin:active {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+}
+
+.btn--admin.active {
+  background: rgba(255,215,0,0.2);
+  border-color: rgba(255,215,0,0.4);
+  color: rgba(255,215,0,0.8);
+}
+
 .level-list {
   flex: 1;
   overflow-y: auto;
