@@ -1460,6 +1460,93 @@ html, body {
 }
 
 /* Events panel */
+/* ===== HOW TO PLAY / INFO SCREEN ===== */
+.info-panel {
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  overflow: hidden;
+}
+.info-header {
+  padding: 20px 16px 0;
+  flex-shrink: 0;
+}
+.info-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: clamp(20px, 5vw, 26px);
+  color: #fff;
+  margin: 0 0 12px;
+  text-align: center;
+}
+.info-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.info-tab {
+  flex: 1;
+  min-width: 70px;
+  max-width: 140px;
+  padding: 8px 6px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.7);
+  font-size: clamp(10px, 2.4vw, 12px);
+  font-family: 'Fredoka', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.info-tab.active {
+  background: #e94560;
+  color: #fff;
+  border-color: #e94560;
+}
+.info-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  color: #ccc;
+  font-size: 13px;
+  line-height: 1.7;
+  -webkit-overflow-scrolling: touch;
+}
+.info-content h3 {
+  color: #fff;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  margin: 16px 0 8px;
+}
+.info-content h3:first-child { margin-top: 0; }
+.info-content p { margin: 0 0 12px; }
+.info-content ul { padding-left: 20px; margin: 0 0 12px; }
+.info-content li { margin-bottom: 6px; }
+.info-content .tip-icon { font-size: 18px; margin-right: 6px; }
+
+/* ===== Capacitor WebView Fixes ===== */
+html {
+  -webkit-text-size-adjust: 100%; /* Prevent font scaling */
+  -ms-text-size-adjust: 100%;
+}
+body {
+  touch-action: manipulation; /* No double-tap zoom */
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none; /* No pull-to-refresh */
+}
+#game-screen, #world-map, #level-grid, #social-screen, #shop-screen,
+#events-screen, #no-lives, #level-complete, #level-fail, #pause-screen,
+#info-screen, #purchase-modal, #purchase-success {
+  /* Safe area padding for notch devices */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+.events-panel {
 .events-panel {
   width: min(95vw, 420px);
   max-height: 85vh;

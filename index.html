@@ -10,9 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/main.css?v=26">
-<link rel="stylesheet" href="css/animations.css?v=26">
-<link rel="stylesheet" href="css/candy-designs.css?v=26">
+<link rel="stylesheet" href="css/main.css?v=27">
+<link rel="stylesheet" href="css/animations.css?v=27">
+<link rel="stylesheet" href="css/candy-designs.css?v=27">
 </head>
 <body>
 
@@ -34,6 +34,10 @@
         🎪 Events
         <span id="events-btn-badge" class="nav-badge" style="display:none;"></span>
       </button>
+      &nbsp;
+      <button id="btn-open-info" class="btn--events-entry" style="background:rgba(255,255,255,0.04);width:auto;aspect-ratio:auto;padding:8px 12px;">
+        ℹ️ Info
+      </button>
     </div>
     <div id="world-list" class="world-list"></div>
   </div>
@@ -53,8 +57,7 @@
     </div>
   </div>
 
-  <!-- ===== ADMIN DEBUG TOGGLE ===== -->
-  <button id="btn-admin" class="btn--admin" title="Admin Mode">⚙</button>
+  <!-- ADMIN DEBUG TOGGLE — removed for production (Phase 10) -->
 
   <!-- ===== GAME SCREEN ===== -->
   <div id="game-screen" class="screen active">
@@ -276,6 +279,28 @@
   </div>
 
 
+  <!-- ===== HOW TO PLAY / INFO SCREEN ===== -->
+  <div id="info-screen" class="screen">
+    <div class="info-panel">
+      <div class="info-header">
+        <h1 class="info-title">📖 How to Play</h1>
+        <div class="info-tabs">
+          <button class="info-tab active" data-tab="howto">🎮 How to Play</button>
+          <button class="info-tab" data-tab="tips">💡 Tips</button>
+          <button class="info-tab" data-tab="system">⚙️ System</button>
+          <button class="info-tab" data-tab="privacy">🔒 Privacy</button>
+        </div>
+      </div>
+      <div id="info-content" class="info-content"></div>
+      <div class="back-btn-wrapper">
+        <button id="btn-back-info" class="btn--back" aria-label="Back">
+          <svg viewBox="0 0 24 24"><polyline points="15,4 7,12 15,20"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== EVENTS SCREEN ===== -->
   <!-- ===== EVENTS SCREEN ===== -->
   <div id="events-screen" class="screen overlay">
     <div class="events-panel glass-panel">
@@ -311,21 +336,21 @@
 
 </div>
 
-<script src="js/storage.js?v=26"></script>
-<script src="js/scoring.js?v=26"></script>
-<script src="js/levels.js?v=26"></script>
-<script src="js/board.js?v=26"></script>
-<script src="js/match-engine.js?v=26"></script>
-<script src="js/special.js?v=26"></script>
-<script src="js/obstacles.js?v=26"></script>
-<script src="js/audio.js?v=26"></script>
-<script src="js/cascade.js?v=26"></script>
-<script src="js/input.js?v=26"></script>
-<script src="js/ui.js?v=26"></script>
-<script src="js/shop.js?v=26"></script>
-<script src="js/social.js?v=26"></script>
-<script src="js/events.js?v=26"></script>
-<script src="js/main.js?v=26"></script>
+<script src="js/storage.js?v=27"></script>
+<script src="js/scoring.js?v=27"></script>
+<script src="js/levels.js?v=27"></script>
+<script src="js/board.js?v=27"></script>
+<script src="js/match-engine.js?v=27"></script>
+<script src="js/special.js?v=27"></script>
+<script src="js/obstacles.js?v=27"></script>
+<script src="js/audio.js?v=27"></script>
+<script src="js/cascade.js?v=27"></script>
+<script src="js/input.js?v=27"></script>
+<script src="js/ui.js?v=27"></script>
+<script src="js/shop.js?v=27"></script>
+<script src="js/social.js?v=27"></script>
+<script src="js/events.js?v=27"></script>
+<script src="js/main.js?v=27"></script>
 <script>
 // Safety check: reset corrupted events data from pre-Phase 9
 (function(){try{var e=localStorage.getItem('ss_events');if(e){var d=JSON.parse(e);if(!d.challenges||!d.challenges.items){console.log('Events data migrated to Phase 9 format');localStorage.setItem('ss_events',JSON.stringify({lastSpinDate:d.lastSpinDate||'',streak:d.streak||{current:1,lastClaimDate:'',claimed:{}},challenges:{}}));}}}catch(ex){}})();

@@ -52,13 +52,13 @@ const EventManager = {
   /** Check if today's spin is available */
   canSpinToday() {
     var d = this._getData();
-    return d.lastSpinDate !== new Date().toDateString();
+    return d.lastSpinDate !== this._gameDay();
   },
 
   /** Perform the spin → returns the reward */
   doSpin() {
     var d = this._getData();
-    var today = new Date().toDateString();
+    var today = this._gameDay();
     if (d.lastSpinDate === today) return null; // already spun today
 
     // Weighted random pick
@@ -86,7 +86,28 @@ const EventManager = {
     return pool[Math.floor(Math.random() * pool.length)];
   },
 
-  /** Get this week's Monday date string */
+  /** Get game-day string — resets at 8am, not midnight */
+  _gameDay() {
+    var now = new Date();
+    // Before 8am = still "yesterday" in game time
+    if (now.getHours() < 8) {
+      var d = new Date(now.getTime() - 86400000);
+      return d.toDateString();
+    }
+    return now.toDateString();
+  },
+
+  /** Get Monday date string at 8am boundary */
+  _gameWeekMonday() {
+    var now = new Date();
+    if (now.getHours() < 8) now = new Date(now.getTime() - 86400000);
+    var day = now.getDay();
+    var diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    var mon = new Date(now.setDate(diff));
+    return mon.toDateString();
+  },
+
+  /** Get this week's Monday (midnight, for legacy reference) */
   _getWeekMonday() {
     var now = new Date();
     var day = now.getDay();
@@ -98,7 +119,7 @@ const EventManager = {
   /** Get/init weekly challenges */
   getChallenges() {
     var d = this._getData();
-    var mon = this._getWeekMonday();
+    var mon = this._gameWeekMonday();
     if (!d.challenges || !d.challenges.week || d.challenges.week !== mon) {
       // New week — reset weekly totals + pick 3 new challenges
       d.weeklyTotals = { stars: 0, score: 0, candies: 0, levels: 0, worlds2plus: 0, specials: 0, obstacles: 0, boosters: 0 };
@@ -245,7 +266,7 @@ const EventManager = {
   /** Get streak data */
   getStreak() {
     var d = this._getData();
-    var today = new Date().toDateString();
+    var today = this._gameDay();
     if (!d.streak) d.streak = { current: 1, lastClaimDate: '', claimed: {} };
     var s = d.streak;
     if (!s.claimed) s.claimed = {};
@@ -263,14 +284,14 @@ const EventManager = {
   /** Can claim today's streak? */
   canClaimStreak() {
     var s = this.getStreak();
-    var today = new Date().toDateString();
+    var today = this._gameDay();
     return s.lastClaimDate !== today && !s.claimed[s.current];
   },
 
   /** Claim today's streak reward */
   claimStreak() {
     var d = this._getData();
-    var today = new Date().toDateString();
+    var today = this._gameDay();
     // Use getStreak() to get properly initialized streak data
     var s = this.getStreak();
 

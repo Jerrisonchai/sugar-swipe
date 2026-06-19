@@ -674,42 +674,14 @@ window._SS = window._SS || {};
       });
     }
 
-    setupAdminToggle();
     bindEventsNav();
   }
 
-  function setupAdminToggle() {
-    const btn = document.getElementById('btn-admin');
-    if (!btn) return;
-
-    btn.addEventListener('click', () => {
-      const active = btn.classList.contains('active');
-      if (active) {
-        Storage.restoreAdminSnapshot();
-        btn.classList.remove('active');
-        btn.title = 'Admin Mode';
-      } else {
-        Storage.saveAdminSnapshot();
-        const adminProgress = {};
-        for (let i = 1; i <= 60; i++) adminProgress[i] = 3;
-        Storage.set('progress', adminProgress);
-        Storage.setUnlockedWorld(6);
-        Storage.set('coins', 9999);
-        Storage.set('goldbars', 9999);
-        Storage.set('boosters', { moves: 99, hammer: 99, bomb: 99 });
-        Storage.set('lives', { lives: 5, lastRegenTime: Date.now() + 365*24*3600000 });
-        btn.classList.add('active');
-        btn.title = 'Admin Mode ON — click to restore';
-      }
-      if (document.getElementById('world-map').classList.contains('active')) {
-        UI.showWorldMap();
-      } else if (document.getElementById('level-grid').classList.contains('active')) {
-        const gridTitle = document.getElementById('grid-world-name');
-        const world = UI.WORLD_DATA.find(w => w.name === gridTitle.textContent);
-        if (world) UI.showLevelGrid(world.id);
-      }
-    });
-  }
+  // ADMIN TOGGLE DISABLED FOR PRODUCTION (Phase 10)
+  // Uncomment for development:
+  /*
+  function setupAdminToggle() { ... }
+  */
 
   function gotoWorldMap() {
     document.querySelectorAll('.screen.overlay').forEach(s => s.classList.remove('active'));
@@ -733,6 +705,16 @@ window._SS = window._SS || {};
       UI.showEvents();
       UI._updateEventBadge();
     });
+
+    // Info button
+    var infoBtn = document.getElementById('btn-open-info');
+    if (infoBtn) {
+      infoBtn.addEventListener('click', function() {
+        AudioFX.init();
+        UI.showHowToPlay();
+        UI.bindInfoNav();
+      });
+    }
   }
 
   /** Called after level complete to refresh event badge */

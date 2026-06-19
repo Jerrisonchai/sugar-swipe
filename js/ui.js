@@ -1017,6 +1017,83 @@ const UI = {
 
 
   /* ===== PHASE 9: EVENTS ===== */
+  /* ---- How to Play / Info Screen ---- */
+  showHowToPlay() {
+    this.showScreen('info-screen');
+  },
+
+  bindInfoNav() {
+    var self = this;
+    var btn = document.getElementById('btn-open-info');
+    if (btn) btn.addEventListener('click', function() { self.showHowToPlay(); });
+    var back = document.getElementById('btn-back-info');
+    if (back) back.addEventListener('click', function() { self.showWorldMap(); });
+    // Info tabs
+    document.querySelectorAll('.info-tab').forEach(function(t) {
+      t.addEventListener('click', function() {
+        document.querySelectorAll('.info-tab').forEach(function(x) { x.classList.remove('active'); });
+        this.classList.add('active');
+        self._renderInfoTab(this.dataset.tab);
+      });
+    });
+    this._renderInfoTab('howto');
+  },
+
+  _renderInfoTab(tab) {
+    var content = document.getElementById('info-content');
+    if (!content) return;
+    var html = '';
+    if (tab === 'howto') {
+      html = '<h3>🎯 Goal</h3><p>Swap adjacent candies to create matches of 3 or more of the same color. Complete each level\'s objective before you run out of moves!</p>'
+        + '<h3>🖐️ How to Play</h3><ul><li><strong>Swipe</strong> a candy up, down, left, or right to swap it with its neighbor.</li><li>Matches of <strong>3</strong> clear those candies and earn points.</li><li>Matches of <strong>4</strong> create a <strong>Striped Candy</strong> that clears an entire row or column.</li><li>Matches of <strong>5</strong> in L/T shapes create a <strong>Wrapped Candy</strong> that explodes a 3×3 area.</li><li>Matches of <strong>5 in a row</strong> create a <strong>Color Bomb</strong> that clears all candies of one color.</li></ul>'
+        + '<h3>⭐ Stars</h3><p>Earn 1-3 stars based on how far you exceed the target score. Stars unlock later levels and worlds!</p>'
+        + '<h3>🧩 Obstacles</h3><ul><li><strong>Ice</strong> 🧊 — Blocks the cell until cleared by a match next to it.</li><li><strong>Chocolate</strong> 🍫 — Spreads if not cleared.</li><li><strong>Licorice</strong> 🖤 — Blocks swaps.</li><li><strong>Jelly</strong> 🍮 — Must be cleared by matching candies on top of it.</li></ul>'
+        + '<h3>🎒 Boosters</h3><ul><li><strong>+3 Moves</strong> — Adds 3 extra moves.</li><li><strong>Hammer</strong> 🍭 — Tap a candy to smash it.</li><li><strong>Color Bomb</strong> 💣 — Place a bomb that clears all of one color.</li></ul>'
+        + '<h3>❤️ Lives</h3><p>You start with 5 lives. Fail a level → lose 1 life. Lives regenerate automatically over time. You can also buy lives with coins or receive them as gifts from friends.</p>';
+    } else if (tab === 'tips') {
+      html = '<h3>💡 Pro Tips</h3>'
+        + '<ul>'
+        + '<li>🔍 <strong>Scan for 4-match opportunities</strong> — Striped candies are game-changers.</li>'
+        + '<li>⬇️ <strong>Work from the bottom up</strong> — Cascading from the bottom creates more chain reactions.</li>'
+        + '<li>🌈 <strong>Combine specials</strong> — Swap a Striped with a Color Bomb for maximum destruction!</li>'
+        + '<li>🧊 <strong>Clear obstacles early</strong> — Ice and chocolate get harder the longer you wait.</li>'
+        + '<li>📊 <strong>Watch your move count</strong> — Efficiency matters for earning 3 stars.</li>'
+        + '<li>🎯 <strong>Focus on objectives</strong> — If it\'s a Jelly level, prioritize jelly tiles over high scores.</li>'
+        + '<li>📅 <strong>Spin daily</strong> — Free rewards every day!</li>'
+        + '<li>🔥 <strong>Keep your streak</strong> — Log in daily for escalating streak rewards.</li>'
+        + '</ul>';
+    } else if (tab === 'system') {
+      html = '<h3>⚙️ System Information</h3>'
+        + '<p><strong>Sugar Swipe v1.0</strong> — A premium match-3 puzzle game built with vanilla HTML/CSS/JavaScript.</p>'
+        + '<p><strong>Platform:</strong> Mobile Web (PWA) + Android APK via Capacitor</p>'
+        + '<p><strong>Storage:</strong> All progress is stored locally on your device (LocalStorage). No data leaves your phone.</p>'
+        + '<p><strong>Audio:</strong> Procedurally generated sound effects using Web Audio API — zero audio files downloaded.</p>'
+        + '<p><strong>Graphics:</strong> 100% CSS-drawn candies, gradients, and shapes — zero image files.</p>'
+        + '<p><strong>Offline:</strong> Full gameplay works offline. No server required.</p>'
+        + '<p><strong>Social:</strong> 3 AI bot friends (Maya, Rex, Luna) — all behavior simulated locally. No real multiplayer.</p>'
+        + '<p><strong>Updates:</strong> Events refresh daily at 8:00 AM. Weekly challenges and leaderboards refresh every Monday at 8:00 AM.</p>'
+        + '<p style="margin-top:16px;color:#888;font-size:11px;">Made with ❤️ by Jerrison & Luffy 🏴‍☠️ | 2026</p>';
+    } else if (tab === 'privacy') {
+      html = '<h3>🔒 Privacy Policy</h3>'
+        + '<p><em>Effective: June 19, 2026</em></p>'
+        + '<h3>📋 Data Collection</h3>'
+        + '<p><strong>Sugar Swipe does NOT collect, transmit, or store ANY personal data.</strong> All game data (scores, progress, settings) is stored exclusively on your device using LocalStorage.</p>'
+        + '<h3>📡 No Network Access</h3>'
+        + '<p>The app does not make any network requests. No analytics, no tracking, no ads, no cloud sync.</p>'
+        + '<h3>🤖 AI Bot Data</h3>'
+        + '<p>The 3 AI bot friends (Maya, Rex, Luna) are entirely simulated on-device. Their scores and behavior are generated locally using pseudorandom algorithms. No data about your gameplay is used to train or influence their behavior.</p>'
+        + '<h3>🛒 Purchases</h3>'
+        + '<p>All in-game purchases (gold bars, coin packs) are currently simulated/mock only. No real money transactions are processed. When real payments are added (v2.0+), they will use Google Play Billing with standard privacy protections.</p>'
+        + '<h3>👶 Children</h3>'
+        + '<p>Sugar Swipe does not knowingly collect any personal information from children under 13. As the app collects no data at all, it is fully COPPA-compliant.</p>'
+        + '<h3>📝 Changes</h3>'
+        + '<p>This privacy policy may be updated in future versions. Continued use of the app after changes constitutes acceptance.</p>'
+        + '<h3>📧 Contact</h3>'
+        + '<p>Questions? Contact: <strong>jerrisonchai@gmail.com</strong></p>';
+    }
+    content.innerHTML = html;
+  },
+
   showEvents() {
     this.showScreen('events-screen');
     var self = this;
